@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שליפת נתונים פשוטה מגיליון Google</title>
+    <!-- Tailwind CSS CDN for basic styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background-color: #0b1220; /* Dark background */
+            color: #e5e7eb; /* Light text */
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #1a202c; /* Slightly lighter dark for container */
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #4a5568; /* Darker border for table */
+            padding: 10px;
+            text-align: right;
+        }
+        th {
+            background-color: #2d3748; /* Darker background for headers */
+            font-weight: bold;
+        }
+        .loading-message {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="text-3xl font-bold mb-6 text-center">נתונים מגיליון Google Sheets</h1>
+        <div id="data-output" class="min-h-[100px] flex items-center justify-center">
+            <p class="loading-message">טוען נתונים...</p>
+        </div>
+    </div>
+
+    <script>
+        // פרטי הגיליון וה-API שסופקו
+        const SHEET_ID = '1uxUQGElkh7BSy73DnmU1lb0DW7kiS4otLFOVJzrSMBAE'; // מזהה הגיליון שלך
+        const API_URL = "https://script.google.com/macros/s/AKfycbzeBkksUNhwEuyVaQHaIDsnSGWAVtKp5RU6r95dDrqd21gRY_s1esytzxEBWDvxhjMfYQ/exec"; // כתובת ה-URL של Apps Script
+        const API_TOKEN = "12345ABC"; // טוקן ה-API שלך
+
+        // כתובת ה-URL לשליפה ישירה מגיליון Google Sheets באמצעות gviz
+        // שינוי: הוספת gid=0 ושינוי פורמט הפלט ל-json
+        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=0&tqx=out:json`;
+
+        async function fetchData() {
+            const dataOutput = document.getElementById('data-output');
+            dataOutput.innerHTML = '<p class="loading-message">טוען נתונים...</p>';
+
+            try {
+                // שליפת הנתונים מהגיליון
+                const response = await fetch(sheetUrl);
+                const text = await response.text();
+                
+                // שינוי: הסרת החיתוך (substring) מכיוון שהגיליון צפוי להחזיר JSON נקי
+                // Google Sheets מחזיר JSON עטוף ב-callback, צריך לנקות אותו
+                const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const json = JSON.parse(jsonString);
+
+
+                const rows = json.table.rows;
+                if (!rows || rows.length === 0) {
+                    dataOutput.innerHTML = '<p class="text-center text-red-400">לא נמצאו נתונים בגיליון.</p>';
+                    return;
+                }
+
+                const headers = rows[0].c.map(cell => cell ? cell.v : ''); // כותרות העמודות בשורה הראשונה
+                const dataRows = rows.slice(1); // כל שאר השורות הן נתונים
+
+                let tableHtml = '<table class="min-w-full divide-y divide-gray-700">';
+                // בניית כותרות הטבלה
+                tableHtml += '<thead><tr>';
+                headers.forEach(header => {
+                    tableHtml += `<th class="px-4 py-2 text-white text-sm uppercase font-semibold">${header}</th>`;
+                });
+                tableHtml += '</tr></thead>';
+
+                // בניית שורות הנתונים
+                tableHtml += '<tbody class="divide-y divide-gray-700">';
+                dataRows.forEach(row => {
+                    tableHtml += '<tr class="bg-gray-800 hover:bg-gray-700 transition-colors">';
+                    headers.forEach((header, index) => {
+                        const cellValue = row.c[index] ? row.c[index].v : '';
+                        tableHtml += `<td class="px-4 py-2 text-white/90 text-sm">${cellValue}</td>`;
+                    });
+                    tableHtml += '</tr>';
+                });
+                tableHtml += '</tbody></table>';
+
+                dataOutput.innerHTML = tableHtml;
+
+            } catch (error) {
+                console.error('שגיאה בשליפת נתונים:', error);
+                dataOutput.innerHTML = `<p class="text-center text-red-400">שגיאה בטעינת הנתונים: ${error.message}. ודא שהגיליון פורסם לאינטרנט וה-SHEET_ID נכון.</p>`;
+            }
+        }
+
+        // הפעל את שליפת הנתונים כאשר הדף נטען
+        document.addEventListener('DOMContentLoaded', fetchData);
+    </script>
+
+</body>
+</html>
