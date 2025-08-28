@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>שליפת נתונים פשוטה מגיליון Google</title>
+    <title>כלי בדיקה: עריכה ושמירה לגיליון Google Sheets</title>
     <!-- Tailwind CSS CDN for basic styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -14,7 +14,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             background-color: #1a202c; /* Slightly lighter dark for container */
             border-radius: 12px;
@@ -26,60 +26,118 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            table-layout: fixed; /* Fix table layout for consistent column widths */
         }
         th, td {
             border: 1px solid #4a5568; /* Darker border for table */
             padding: 10px;
             text-align: right;
+            white-space: nowrap; /* Prevent text wrapping in cells */
+            overflow: hidden; /* Hide overflow content */
+            text-overflow: ellipsis; /* Show ellipsis for overflow */
         }
         th {
             background-color: #2d3748; /* Darker background for headers */
             font-weight: bold;
         }
-        .loading-message {
+        td[contenteditable="true"]:focus {
+            outline: 2px solid #6366f1; /* Highlight editable cells on focus */
+            background-color: #374151; /* Darker background for editing */
+        }
+        .loading-message, .error-message, .success-message {
             text-align: center;
             font-size: 1.2rem;
             margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
         }
+        .loading-message { color: #60a5fa; background-color: #1e3a8a; } /* Blue */
+        .error-message { color: #ef4444; background-color: #7f1d1d; } /* Red */
+        .success-message { color: #22c55e; background-color: #166534; } /* Green */
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1 class="text-3xl font-bold mb-6 text-center">נתונים מגיליון Google Sheets</h1>
-        <div id="data-output" class="min-h-[100px] flex items-center justify-center">
-            <p class="loading-message">טוען נתונים...</p>
+        <h1 class="text-3xl font-bold mb-6 text-center">כלי בדיקה: נתוני הזמנות</h1>
+        
+        <div id="messages" class="mb-4">
+            <!-- הודעות טעינה/שגיאה/הצלחה יוצגו כאן -->
+        </div>
+
+        <div class="flex justify-center gap-4 mb-6">
+            <button id="refreshDataBtn" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors">
+                רענן נתונים
+            </button>
+            <button id="saveChangesBtn" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition-colors">
+                שמור שינויים
+            </button>
+        </div>
+
+        <div id="data-table-container" class="min-h-[200px] flex items-center justify-center overflow-x-auto">
+            <p class="loading-message">לחץ על 'רענן נתונים' כדי לטעון נתונים מהגיליון...</p>
         </div>
     </div>
 
     <script>
         // פרטי הגיליון וה-API שסופקו
-        const SHEET_ID = '1uxUQGElkh7BSy73DnmU1lb0DW7kiS4otLFOVJzrSMBA'; // מזהה הגיליון שלך
+        const SHEET_ID = '1uxUQGElkh7BSy73DnmU1lb0DW7kiS4otLFOVJzrSMBA'; // מזהה הגיליון שלך (עם 'E' בסוף)
         const API_URL = "https://script.google.com/macros/s/AKfycbwhW3dTErflCH0OrvMnyh4Npp8fu7ZxzKzv8wGMQj2D6-cYjAPY7CdQacgy3FcBtpFE/exec"; // כתובת ה-URL של Apps Script
         const API_TOKEN = "12345ABC"; // טוקן ה-API שלך
 
-        // כתובת ה-URL לשליפה ישירה מגיליון Google Sheets בפורמט CSV
-        // זהו ה-URL המומלץ לגישה ציבורית לנתוני גיליון שפורסם כ-CSV
-        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv&gid=0`;
+        let currentFetchedData = []; // נתונים אחרונים שנטענו, ישמשו לעקוב אחר ID של שורות
 
-        async function fetchData() {
-            const dataOutput = document.getElementById('data-output');
-            dataOutput.innerHTML = '<p class="loading-message">טוען נתונים...</p>';
+        const messagesDiv = document.getElementById('messages');
+        const dataTableContainer = document.getElementById('data-table-container');
 
+        // פונקציית עזר להצגת הודעות למשתמש
+        function showMessage(message, type = 'info') {
+            let bgColorClass, textColorClass;
+            switch(type) {
+                case 'loading': bgColorClass = 'bg-blue-900'; textColorClass = 'text-blue-200'; break;
+                case 'error': bgColorClass = 'bg-red-900'; textColorClass = 'text-red-200'; break;
+                case 'success': bgColorClass = 'bg-green-900'; textColorClass = 'text-green-200'; break;
+                default: bgColorClass = 'bg-gray-800'; textColorClass = 'text-gray-200'; break;
+            }
+            messagesDiv.innerHTML = `<p class="${bgColorClass} ${textColorClass} loading-message">${message}</p>`;
+        }
+
+        // פונקציית עזר לשליחת בקשות ל-Apps Script
+        async function callAppsScriptApi(action, payload) {
             try {
-                // שליפת הנתונים מהגיליון
-                const response = await fetch(sheetUrl);
-                const text = await response.text(); // מצפה לטקסט CSV
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CRM-TOKEN': API_TOKEN },
+                    body: JSON.stringify({ action, payload })
+                });
+                const data = await response.json();
+                if (!data.ok) {
+                    throw new Error(data.error || 'Apps Script API error');
+                }
+                return data.data;
+            } catch (error) {
+                console.error('שגיאה בתקשורת עם Apps Script:', error);
+                throw new Error(`שגיאה בתקשורת עם Apps Script: ${error.message}`);
+            }
+        }
+
+        // פונקציה לשליפת נתונים מהגיליון
+        async function fetchData() {
+            showMessage('טוען נתונים מהגיליון...', 'loading');
+            try {
+                const fetchedData = await callAppsScriptApi('fetchOrders', { sheetId: SHEET_ID });
                 
-                // ניתוח נתוני CSV
-                const lines = text.split('\n');
-                if (lines.length <= 1) { // כותרות בלבד או ריק
-                    dataOutput.innerHTML = '<p class="text-center text-red-400">לא נמצאו נתונים בגיליון (או רק כותרות).</p>';
+                if (!fetchedData || fetchedData.length === 0) {
+                    dataTableContainer.innerHTML = '<p class="error-message">לא נמצאו נתונים בגיליון.</p>';
+                    currentFetchedData = [];
                     return;
                 }
 
-                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '')); // ניקוי כותרות
-                const dataRows = lines.slice(1);
+                currentFetchedData = fetchedData; // שמור את הנתונים שנטענו
+                
+                // ההנחה היא ש-Apps Script מחזיר מערך של אובייקטים, כאשר האובייקט הראשון הוא הכותרות
+                // נשתמש ב-Object.keys מהאובייקט הראשון כדי לקבל את הכותרות
+                const headers = Object.keys(fetchedData[0]); 
 
                 let tableHtml = '<table class="min-w-full divide-y divide-gray-700">';
                 // בניית כותרות הטבלה
@@ -89,30 +147,76 @@
                 });
                 tableHtml += '</tr></thead>';
 
-                // בניית שורות הנתונים
+                // בניית שורות הנתונים הניתנות לעריכה
                 tableHtml += '<tbody class="divide-y divide-gray-700">';
-                dataRows.forEach(line => {
-                    if (line.trim() === '') return; // דלג על שורות ריקות
-                    const cells = line.split(',').map(c => c.trim().replace(/"/g, '')); // ניקוי תאים
-                    tableHtml += '<tr class="bg-gray-800 hover:bg-gray-700 transition-colors">';
-                    cells.forEach(cellValue => {
-                        tableHtml += `<td class="px-4 py-2 text-white/90 text-sm">${cellValue}</td>`;
+                fetchedData.forEach((rowObject, rowIndex) => {
+                    tableHtml += `<tr data-row-id="${rowObject.id}">`; // נשתמש ב-ID של השורה
+                    headers.forEach(header => {
+                        const cellValue = rowObject[header] !== undefined ? rowObject[header] : '';
+                        // כל תא, למעט ה-ID, יהיה ניתן לעריכה
+                        const isEditable = header.toLowerCase() !== 'id' ? 'contenteditable="true"' : ''; 
+                        tableHtml += `<td class="px-4 py-2 text-white/90 text-sm" ${isEditable}>${cellValue}</td>`;
                     });
                     tableHtml += '</tr>';
                 });
                 tableHtml += '</tbody></table>';
 
-                dataOutput.innerHTML = tableHtml;
+                dataTableContainer.innerHTML = tableHtml;
+                showMessage('הנתונים נטענו בהצלחה. ניתן לערוך את התאים בטבלה וללחוץ "שמור שינויים".', 'success');
 
             } catch (error) {
                 console.error('שגיאה בשליפת נתונים:', error);
-                dataOutput.innerHTML = `<p class="text-center text-red-400">שגיאה בטעינת הנתונים: ${error.message}.
-                                        <br><strong>אנא ודא שה-SHEET_ID נכון ושהגיליון פורסם לאינטרנט בפורמט CSV.</strong></p>`;
+                dataTableContainer.innerHTML = ''; // נקה טבלה
+                showMessage(`שגיאה בטעינת הנתונים: ${error.message}. אנא ודא שה-API_URL וה-API_TOKEN נכונים, ושקוד ה-Apps Script פורסם עם הרשאות 'כל אחד'.`, 'error');
             }
         }
 
-        // הפעל את שליפת הנתונים כאשר הדף נטען
-        document.addEventListener('DOMContentLoaded', fetchData);
+        // פונקציה לשמירת שינויים חזרה לגיליון
+        async function saveChanges() {
+            showMessage('שומר שינויים לגיליון...', 'loading');
+            const table = dataTableContainer.querySelector('table');
+            if (!table) {
+                showMessage('אין טבלה לשמירה.', 'error');
+                return;
+            }
+
+            const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+            const rows = table.querySelectorAll('tbody tr');
+            const updatedOrders = [];
+
+            // עבור על כל שורה בטבלה
+            for (const row of rows) {
+                const rowId = row.dataset.rowId;
+                const cells = Array.from(row.querySelectorAll('td'));
+                const newOrderData = { id: rowId }; // תמיד מתחילים עם ה-ID של השורה
+
+                // קבץ את הנתונים החדשים מהתאים הערוכים
+                headers.forEach((header, index) => {
+                    newOrderData[header] = cells[index].textContent.trim();
+                });
+                updatedOrders.push(newOrderData);
+            }
+
+            try {
+                // שלח כל הזמנה מעודכנת בנפרד (או שקול לשלוח מערך אם ה-Apps Script תומך בכך)
+                for (const order of updatedOrders) {
+                    await callAppsScriptApi('updateOrder', order);
+                }
+                showMessage('השינויים נשמרו בהצלחה!', 'success');
+            } catch (error) {
+                console.error('שגיאה בשמירת נתונים:', error);
+                showMessage(`שגיאה בשמירת הנתונים: ${error.message}.`, 'error');
+            }
+        }
+
+
+        // מאזיני אירועים לכפתורים
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('refreshDataBtn').addEventListener('click', fetchData);
+            document.getElementById('saveChangesBtn').addEventListener('click', saveChanges);
+            // טען נתונים אוטומטית בפעם הראשונה
+            fetchData();
+        });
     </script>
 
 </body>
