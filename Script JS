@@ -1,6 +1,6 @@
 // --- Constants and Utility Functions ---
-const SHEET_ID = '1uxUQGElkh7BSy73DnmU1lb0DW7kiS4otLFOVJzrSMBAE'; // Replace with your actual Google Sheet ID
-const API_URL = "https://script.google.com/macros/s/AKfycbwhW3dTErflCH0OrvMnyh4Npp8fu7ZxzKzv8wGMQj2D6-cYjAPY7CdQacgy3FcBtpFE/exec"; // Example Apps Script URL
+const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE'; // Replace with your actual Google Sheet ID
+const API_URL = "https://script.google.com/macros/s/AKfycbzeBkksUNhwEuyVaQHaIDsnSGWAVtKp5RU6r95dDrqd21gRY_s1esytzxEBWDvxhjMfYQ/exec"; // Example Apps Script URL
 const API_TOKEN = "12345ABC"; // Example API Token
 
 const DRIVERS_INFO = {
@@ -275,7 +275,7 @@ function addOrder(newOrder) {
   appState.orders.push(newOrder);
   renderAll();
   showCustomAlert('הזמנה נוספה בהצלחה!', 'success');
-  // callApi('addOrder', newOrder); // Uncomment to enable API calls
+  callApi('addOrder', newOrder); // Uncommented to enable API calls
 }
 
 function updateOrder(updatedOrder) {
@@ -284,7 +284,7 @@ function updateOrder(updatedOrder) {
     appState.orders[index] = updatedOrder;
     renderAll();
     showCustomAlert('הזמנה עודכנה בהצלחה!', 'success');
-    // callApi('updateOrder', updatedOrder); // Uncomment to enable API calls
+    callApi('updateOrder', updatedOrder); // Uncommented to enable API calls
   }
 }
 
@@ -298,7 +298,7 @@ function deleteOrder(orderId) {
     if (appState.orders.length < initialLength) {
       renderAll();
       showCustomAlert('הזמנה נמחקה בהצלחה!', 'success');
-      // callApi('deleteOrder', { id: orderId }); // Uncomment to enable API calls
+      callApi('deleteOrder', { id: orderId }); // Uncommented to enable API calls
     } else {
       showCustomAlert('שגיאה: הזמנה לא נמצאה.', 'error');
     }
