@@ -1,5 +1,5 @@
 // --- Constants and Utility Functions ---
-const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE'; // Replace with your actual Google Sheet ID
+const SHEET_ID = '1uxUQGElkh7BSy73DnmU1lb0DW7kiS4otLFOVJzrSMBAE'; // Replace with your actual Google Sheet ID
 const API_URL = "https://script.google.com/macros/s/AKfycbzeBkksUNhwEuyVaQHaIDsnSGWAVtKp5RU6r95dDrqd21gRY_s1esytzxEBWDvxhjMfYQ/exec"; // Example Apps Script URL
 const API_TOKEN = "12345ABC"; // Example API Token
 
