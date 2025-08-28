@@ -54,13 +54,13 @@
 
     <script>
         // פרטי הגיליון וה-API שסופקו
-        const SHEET_ID = '1uxUQGElkh7BSy73DnmU1lb0DW7kiS4otLFOVJzrSMBAE'; // מזהה הגיליון שלך
+        const SHEET_ID = '1uxUQGElkh7BSy73DnmU1lb0DW7kiS4otLFOVJzrSMBA'; // מזהה הגיליון שלך
         const API_URL = "https://script.google.com/macros/s/AKfycbzeBkksUNhwEuyVaQHaIDsnSGWAVtKp5RU6r95dDrqd21gRY_s1esytzxEBWDvxhjMfYQ/exec"; // כתובת ה-URL של Apps Script
         const API_TOKEN = "12345ABC"; // טוקן ה-API שלך
 
-        // כתובת ה-URL לשליפה ישירה מגיליון Google Sheets באמצעות gviz
-        // שינוי: הוספת gid=0 ושינוי פורמט הפלט ל-json
-        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=0&tqx=out:json`;
+        // כתובת ה-URL לשליפה ישירה מגיליון Google Sheets בפורמט CSV
+        // זהו ה-URL המומלץ לגישה ציבורית לנתוני גיליון שפורסם כ-CSV
+        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv&gid=0`;
 
         async function fetchData() {
             const dataOutput = document.getElementById('data-output');
@@ -69,22 +69,17 @@
             try {
                 // שליפת הנתונים מהגיליון
                 const response = await fetch(sheetUrl);
-                const text = await response.text();
+                const text = await response.text(); // מצפה לטקסט CSV
                 
-                // שינוי: הסרת החיתוך (substring) מכיוון שהגיליון צפוי להחזיר JSON נקי
-                // Google Sheets מחזיר JSON עטוף ב-callback, צריך לנקות אותו
-                const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-                const json = JSON.parse(jsonString);
-
-
-                const rows = json.table.rows;
-                if (!rows || rows.length === 0) {
-                    dataOutput.innerHTML = '<p class="text-center text-red-400">לא נמצאו נתונים בגיליון.</p>';
+                // ניתוח נתוני CSV
+                const lines = text.split('\n');
+                if (lines.length <= 1) { // כותרות בלבד או ריק
+                    dataOutput.innerHTML = '<p class="text-center text-red-400">לא נמצאו נתונים בגיליון (או רק כותרות).</p>';
                     return;
                 }
 
-                const headers = rows[0].c.map(cell => cell ? cell.v : ''); // כותרות העמודות בשורה הראשונה
-                const dataRows = rows.slice(1); // כל שאר השורות הן נתונים
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '')); // ניקוי כותרות
+                const dataRows = lines.slice(1);
 
                 let tableHtml = '<table class="min-w-full divide-y divide-gray-700">';
                 // בניית כותרות הטבלה
@@ -96,10 +91,11 @@
 
                 // בניית שורות הנתונים
                 tableHtml += '<tbody class="divide-y divide-gray-700">';
-                dataRows.forEach(row => {
+                dataRows.forEach(line => {
+                    if (line.trim() === '') return; // דלג על שורות ריקות
+                    const cells = line.split(',').map(c => c.trim().replace(/"/g, '')); // ניקוי תאים
                     tableHtml += '<tr class="bg-gray-800 hover:bg-gray-700 transition-colors">';
-                    headers.forEach((header, index) => {
-                        const cellValue = row.c[index] ? row.c[index].v : '';
+                    cells.forEach(cellValue => {
                         tableHtml += `<td class="px-4 py-2 text-white/90 text-sm">${cellValue}</td>`;
                     });
                     tableHtml += '</tr>';
@@ -110,7 +106,8 @@
 
             } catch (error) {
                 console.error('שגיאה בשליפת נתונים:', error);
-                dataOutput.innerHTML = `<p class="text-center text-red-400">שגיאה בטעינת הנתונים: ${error.message}. ודא שהגיליון פורסם לאינטרנט וה-SHEET_ID נכון.</p>`;
+                dataOutput.innerHTML = `<p class="text-center text-red-400">שגיאה בטעינת הנתונים: ${error.message}.
+                                        <br><strong>אנא ודא שה-SHEET_ID נכון ושהגיליון פורסם לאינטרנט בפורמט CSV.</strong></p>`;
             }
         }
 
