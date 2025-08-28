@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול נהגים - Dashboard</title>
+    <!-- 1. Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Tailwind CSS Configuration - חייב לבוא אחרי ה-CDN של Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ["Rubik", "Arial", "ui-sans-serif", "system-ui"] },
+                    boxShadow: {
+                        // Shadow/Outline מעודכנים להיות עדינים אך בולטים
+                        glow: "0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 20px rgba(59,130,246,0.25)",
+                        neon: "0 0 6px rgba(59,130,246,.4), 0 0 16px rgba(59,130,246,.25)",
+                    },
+                    colors: {
+                        ali: "#16a34a",    // ירוק לעלי
+                        hikmat: "#0ea5e9", // כחול לחכמת
+                        crane: "#0ea5e9",  // כחול למנוף
+                        manual: "#16a34a", // ירוק לפריקה ידנית
+                        warning: "#f59e0b", // ענבר לאזהרות
+                        danger: "#ef4444",  // אדום לסכנה
+                        // צבעי הרקע המעודכנים להיות כהים ופחות שקופים
+                        glass: "rgba(30,41,59,0.96)", // כהה יותר, פחות שקוף
+                        glass2: "rgba(15,23,42,0.98)", // כהה עוד יותר, כמעט אטום
+                        primary: '#4F46E5', // סגול עמוק למיתוג
+                        secondary: '#8B5CF6', // סגול בהיר יותר
+                        accent: '#FACC15', // צהוב זהוב לאלמנטים בולטים
+                        background: '#0b1220', // רקע כהה
+                        'dark-card-bg': '#111827', // אפור כהה אטום לכרטיסים
+                        'dark-border': 'rgba(255,255,255,0.1)', // גבול יותר בולט לאלמנטים כהים
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 3. Global Stylesheet - מקשר לקובץ ה-CSS שיצרנו -->
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+    <div id="root"></div> <!-- זה המקום שבו אפליקציית ה-React שלך תרונדר -->
+
+    <!-- 4. React App (JavaScript) - מקשר לקובץ ה-JS שיצרנו -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
