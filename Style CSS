@@ -1,0 +1,84 @@
+/*
+  סגנונות גלובליים עבור מערכת ניהול הנהגים.
+  סגנונות אלו משפרים את ערכת הנושא הכהה, הבהירות והקריאות.
+*/
+
+html, body {
+  background: #0b1220; /* צבע רקע כהה */
+  color: #e5e7eb; /* צבע טקסט בהיר לניגודיות */
+  font-family: "Rubik", Arial, "ui-sans-serif", "system-ui"; /* פונט מוגדר */
+  direction: rtl; /* כיוון מימין לשמאל לעברית */
+}
+
+/* קלאס מותאם אישית לאפקט Glassmorphism */
+.glass {
+  /*
+    Gradient רקע מעודכן לכהה ופחות שקוף:
+    מתחיל באטימות של 96%, מסתיים באטימות של 98% עם גוון כחול עדין.
+  */
+  background: linear-gradient(180deg, rgba(30,41,59,0.96), rgba(15,23,42,0.98));
+  backdrop-filter: blur(4px); /* טשטוש מופחת לקריאות טובה יותר */
+  border: 1px solid rgba(255,255,255,0.1); /* גבול דק ובהיר להפרדה */
+}
+
+/* פריסת רשת (Grid) עבור רכיב ציר הזמן */
+.grid-cols-timeline {
+  grid-template-columns: 56px repeat(20, minmax(0,1fr)); /* הגדרת עמודות ספציפית לציר הזמן */
+}
+
+/* סגנון לסימוני ה'טיק' בציר הזמן */
+.tick::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255,255,255,.1); /* קו אפור בהיר לסימונים */
+}
+
+/* סגנון לבלוקי הזמנות בודדים בציר הזמן */
+.order-block {
+  position: absolute;
+  top: 2px;
+  height: calc(100% - 4px); /* גובה מותאם לריווח פנימי */
+  border-radius: 14px; /* פינות מעוגלות */
+  cursor: grab; /* סמן גרירה לאלמנטים הניתנים לגרירה */
+  user-select: none; /* מונע בחירת טקסט במהלך גרירה */
+}
+
+/* סגנון לבלוקי הזמנות בזמן גרירה */
+.order-block.dragging {
+  opacity: .85; /* שקיפות קלה במהלך גרירה */
+  outline: 2px dashed rgba(255,255,255,.5); /* מתאר מקווקו למשוב ויזואלי */
+  cursor: grabbing; /* סמן 'תופס' במהלך גרירה */
+}
+
+/* יישור טקסט Placeholder עבור שדות קלט מימין לשמאל (RTL) */
+.rtl-input::placeholder {
+  text-align: right; /* יישור טקסט ה-placeholder לימין עבור RTL */
+}
+
+/*
+  קלאסי Tailwind (הרחבות צבע מותאמות אישית).
+  אם אתה כולל את ה-CDN של Tailwind ואת הקונפיגורציה בקובץ ה-HTML שלך,
+  קלאסים אלו ייוצרו אוטומטית. אם לא, ייתכן שיהיה עליך להגדיר אותם כאן.
+*/
+.bg-manual { background-color: #16a344; } /* ירוק לעלי/ידני */
+.text-manual { color: #16a344; }
+.bg-crane { background-color: #0ea5e9; } /* כחול לחכמת/מנוף */
+.text-crane { color: #0ea5e9; }
+.bg-dark-card-bg { background-color: #111827; } /* רקע Slate כהה ואטום לכרטיסים */
+.border-dark-border { border-color: rgba(255,255,255,0.1); } /* גבול יותר בולט */
+.shadow-glow { box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 20px rgba(59,130,246,0.25); }
+.shadow-neon { box-shadow: 0 0 6px rgba(59,130,246,.4), 0 0 16px rgba(59,130,246,.25); }
+
+/* צבעים ספציפיים לסטטוסים - אלו מיושמים ישירות באמצעות JS */
+.bg-blue-600 { background-color: #2563eb; }
+.bg-yellow-600 { background-color: #eab308; }
+.bg-green-600 { background-color: #22c55e; }
+.bg-red-600 { background-color: #ef4444; }
+.bg-purple-600 { background-color: #a855f7; }
+.bg-gray-600 { background-color: #4b5563; }
+.bg-indigo-600 { background-color: #4f46e5; }
+.bg-orange-600 { background-color: #f97316; }
