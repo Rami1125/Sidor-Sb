@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>בדיקת חיבור ל-Apps Script</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e0e5ec 100%);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+        }
+        .button {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border-radius: 8px;
+            padding: 12px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .button:hover {
+            background: linear-gradient(135deg, #0056b3, #003d80);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        .result-box {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace; /* Modern monospace font */
+            text-align: left;
+            overflow-x: auto;
+            color: #222;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto 0;
+            display: none; /* Hidden by default */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold mb-4 text-gray-800">בדיקת חיבור ל-Apps Script</h1>
+        <p class="text-gray-600 mb-6">לחץ על הכפתור למטה כדי לבדוק אם ה-Backend של Google Apps Script זמין.</p>
+
+        <button id="testConnectionButton" class="button">בדוק חיבור</button>
+        <div id="loadingSpinner" class="loading-spinner"></div>
+
+        <div id="result" class="result-box hidden">
+            <h2 class="font-semibold mb-2">תוצאה:</h2>
+            <pre id="resultContent" class="whitespace-pre-wrap"></pre>
+        </div>
+        <div id="error" class="result-box hidden bg-red-100 border-red-400 text-red-700">
+            <h2 class="font-semibold mb-2">שגיאה:</h2>
+            <pre id="errorContent" class="whitespace-pre-wrap"></pre>
+        </div>
+    </div>
+
+    <script>
+        // *** חשוב: החלף את ה-URL הזה ב-URL החדש של פריסת ה-Apps Script Web App שלך! ***
+        const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwasF7SCeWQm73McR79htGg9PfIyjZW3mR-1AmBaXZGhLD7hDK9ELymSeR-od-kxOl1Nw/exec';
+
+        document.getElementById('testConnectionButton').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            const resultContent = document.getElementById('resultContent');
+            const errorContent = document.getElementById('errorContent');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            resultDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+            loadingSpinner.style.display = 'block'; // Show spinner
+
+            try {
+                // קריאה לפעולה 'testConnection' ב-Apps Script
+                const url = new URL(APPS_SCRIPT_WEB_APP_URL);
+                url.searchParams.append('action', 'testConnection');
+
+                const response = await fetch(url.toString());
+                const data = await response.json();
+
+                loadingSpinner.style.display = 'none'; // Hide spinner
+
+                if (response.ok && data.success) {
+                    resultContent.textContent = JSON.stringify(data, null, 2);
+                    resultDiv.classList.remove('hidden');
+                } else {
+                    errorContent.textContent = data.error || `Received non-success response: ${JSON.stringify(data)}`;
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                loadingSpinner.style.display = 'none'; // Hide spinner
+                errorContent.textContent = `Fetch Error: ${err.message}. Please check console for more details.`;
+                errorDiv.classList.remove('hidden');
+                console.error("Error during fetch:", err);
+            }
+        });
+    </script>
+</body>
+</html>
