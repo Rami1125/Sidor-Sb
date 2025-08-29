@@ -1,257 +1,147 @@
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CRM - Sheets Manager</title>
-  <!-- Tailwind CDN -->
+  <meta charset="UTF-8" />
+  <title>ניהול נתונים מגיליונות</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Simple glassmorphism container */
-    .glass { background: rgba(255,255,255,0.06); backdrop-filter: blur(6px); border-radius: 12px; }
-    .table-fixed th, .table-fixed td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tab { cursor: pointer; padding: 8px 16px; }
+    .tab.active { background-color: #2563eb; color: white; border-radius: 8px; }
+    td[contenteditable="true"] { background: #fef9c3; }
   </style>
 </head>
-<body class="bg-gradient-to-br from-slate-800 to-slate-900 min-h-screen text-slate-100 p-4">
-  <div class="max-w-7xl mx-auto">
-    <header class="mb-4">
-      <h1 class="text-2xl font-semibold">CRM - Sheets Manager</h1>
-      <p class="text-sm text-slate-400">Manage Customers, Orders, Products and more (connected to Google Sheets)</p>
-    </header>
+<body class="bg-gray-100 min-h-screen p-4">
 
-    <!-- Notifications -->
-    <div id="toast" class="fixed right-4 bottom-4 z-50"></div>
+  <h1 class="text-2xl font-bold mb-4">📊 מערכת ניהול נתונים מגוגל שיטס</h1>
 
-    <!-- Controls -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-      <div class="glass p-4">
-        <label class="block text-xs text-slate-300">Apps Script Web App URL</label>
-        <input id="appsUrl" class="w-full mt-1 p-2 rounded bg-transparent border border-slate-700" placeholder="https://script.google.com/macros/s/.../exec" />
-        <button id="saveUrlBtn" class="mt-2 px-3 py-2 rounded bg-sky-600 hover:bg-sky-500">Save URL</button>
-      </div>
-      <div class="glass p-4">
-        <p class="text-sm text-slate-300">Quick actions</p>
-        <div class="mt-2 space-x-2">
-          <button id="testConn" class="px-3 py-2 rounded bg-emerald-600">Test Connection</button>
-          <button id="loadCustomers" class="px-3 py-2 rounded bg-indigo-600">Load Customers</button>
-          <button id="loadOrders" class="px-3 py-2 rounded bg-rose-600">Load Orders</button>
-        </div>
-      </div>
-      <div class="glass p-4">
-        <p class="text-sm text-slate-300">Status</p>
-        <div id="statusBox" class="mt-2 text-xs text-slate-200">Not connected</div>
-      </div>
-    </div>
+  <!-- Tabs -->
+  <div id="tabs" class="flex space-x-2 mb-4"></div>
 
-    <!-- Main content: Customers and Orders => two panels -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <section class="glass p-4">
-        <h2 class="text-lg font-medium mb-2">Customers</h2>
-        <div class="overflow-auto">
-          <table id="customersTable" class="min-w-full divide-y divide-slate-700 table-fixed">
-            <!-- Table will be rendered by JS -->
-          </table>
-        </div>
-      </section>
+  <!-- Table container -->
+  <div id="table-container" class="bg-white rounded-2xl shadow p-4 overflow-x-auto"></div>
 
-      <section class="glass p-4">
-        <h2 class="text-lg font-medium mb-2">Orders</h2>
-        <div class="overflow-auto">
-          <table id="ordersTable" class="min-w-full divide-y divide-slate-700 table-fixed">
-            <!-- Table will be rendered by JS -->
-          </table>
-        </div>
-      </section>
-    </div>
+  <!-- Message -->
+  <div id="message" class="fixed bottom-4 right-4 p-3 rounded-2xl shadow hidden"></div>
 
-    <!-- Loading spinner -->
-    <div id="spinner" class="hidden fixed inset-0 z-40 flex items-center justify-center">
-      <div class="p-4 rounded bg-slate-800/80 shadow-lg">
-        <svg class="animate-spin h-8 w-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.2"></circle>
-          <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="4" stroke-linecap="round"></path>
-        </svg>
-      </div>
-    </div>
+  <script>
+    const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxXJEFzczFErF6s6wAHFDYkMHseuYfDQc6z_4fYbD7iqpRI3q9XoOSQRTIeMI213QLaOw/exec";
 
-  </div>
+    // Tabs definition (must match sheet names!)
+    const SHEETS = [
+      "לקוחות", "הזמנות", "מוצרים", "מניפת_צבעים", "צ_אט_פניות", "נושאי_פנייה", "Logs"
+    ];
 
-<script>
-/**
- * index.html - Frontend JS
- * Comments in English
- */
+    let currentSheet = null;
+    let currentData = [];
 
-// Global variable for Apps Script URL (set by user)
-let APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxXJEFzczFErF6s6wAHFDYkMHseuYfDQc6z_4fYbD7iqpRI3q9XoOSQRTIeMI213QLaOw/exec';
-
-// Simple helper to show toasts
-function showToast(message, type='info'){
-  const toast = document.createElement('div');
-  toast.className = 'mb-2 px-4 py-2 rounded shadow-md ' + (type==='error' ? 'bg-rose-600' : 'bg-slate-700');
-  toast.textContent = message;
-  const container = document.getElementById('toast');
-  container.appendChild(toast);
-  setTimeout(()=>{ toast.remove(); }, 4000);
-}
-
-function setLoading(on){
-  document.getElementById('spinner').classList.toggle('hidden', !on);
-}
-
-// Save URL button
-document.getElementById('saveUrlBtn').addEventListener('click', ()=>{
-  const url = document.getElementById('appsUrl').value.trim();
-  if (!url) { showToast('Please enter Apps Script URL', 'error'); return; }
-  APPS_SCRIPT_WEB_APP_URL = url;
-  localStorage.setItem('APPS_URL', url);
-  document.getElementById('statusBox').textContent = 'Saved URL';
-  showToast('Apps Script URL saved');
-});
-
-// Load saved URL on start
-window.addEventListener('load', ()=>{
-  const saved = localStorage.getItem('APPS_URL');
-  if (saved) { APPS_SCRIPT_WEB_APP_URL = saved; document.getElementById('appsUrl').value = saved; document.getElementById('statusBox').textContent = 'URL loaded'; }
-});
-
-/**
- * callAppsScript - generic helper to call the web app
- * - action: API action name
- * - params: query params (object)
- * - body: request body object for POST
- */
-async function callAppsScript(action, params={}, body=null){
-  if (!APPS_SCRIPT_WEB_APP_URL) throw new Error('APPS_SCRIPT_WEB_APP_URL not set');
-  setLoading(true);
-  const url = new URL(APPS_SCRIPT_WEB_APP_URL);
-  url.searchParams.set('action', action);
-  for (const k in params) url.searchParams.set(k, params[k]);
-
-  const opts = { method: body ? 'POST' : 'GET', headers: {} };
-  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(Object.assign({ action }, body)); }
-
-  // simple exponential backoff
-  let attempt = 0; const maxAttempts = 3;
-  while (attempt < maxAttempts) {
-    try {
-      const res = await fetch(url.toString(), opts);
-      const text = await res.text();
-      let json = {};
-      try { json = JSON.parse(text); } catch (e) { throw new Error('Invalid JSON from server'); }
-      setLoading(false);
-      return json;
-    } catch (err) {
-      attempt++;
-      if (attempt >= maxAttempts) { setLoading(false); throw err; }
-      await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
-    }
-  }
-}
-
-// Test connection
-document.getElementById('testConn').addEventListener('click', async ()=>{
-  try {
-    const resp = await callAppsScript('testConnection');
-    if (resp && resp.success) { document.getElementById('statusBox').textContent = 'Connected: ' + (resp.message || 'OK'); showToast('Connected to Apps Script'); }
-    else { showToast('Connection failed: ' + (resp.error || 'unknown'), 'error'); }
-  } catch (err) { showToast('Connection error: ' + err.message, 'error'); }
-});
-
-// Load customers
-document.getElementById('loadCustomers').addEventListener('click', loadCustomers);
-async function loadCustomers(){
-  try {
-    const resp = await callAppsScript('getCustomers');
-    if (!resp.success) { showToast('Failed to load customers: ' + (resp.error||''), 'error'); return; }
-    renderTable('customersTable', resp.data, 'לקוחות', 'id', async (rowObj) => {
-      // on save callback
-      const updatedData = rowObj; // full object
-      const r = await callAppsScript('updateCustomer', {}, { customerId: rowObj.id, updatedData });
-      if (r && r.success) showToast('Customer saved'); else showToast('Save failed: ' + (r.error||''), 'error');
+    // Build tabs
+    const tabsEl = document.getElementById("tabs");
+    SHEETS.forEach(sheet => {
+      const btn = document.createElement("div");
+      btn.innerText = sheet;
+      btn.className = "tab bg-gray-200";
+      btn.onclick = () => loadSheet(sheet, btn);
+      tabsEl.appendChild(btn);
     });
-  } catch (err) { showToast('Error loading customers: ' + err.message, 'error'); }
-}
 
-// Load orders
-document.getElementById('loadOrders').addEventListener('click', loadOrders);
-async function loadOrders(){
-  try {
-    const resp = await callAppsScript('getOrders');
-    if (!resp.success) { showToast('Failed to load orders: ' + (resp.error||''), 'error'); return; }
-    renderTable('ordersTable', resp.data, 'הזמנות', 'id', async (rowObj) => {
-      const r = await callAppsScript('updateOrder', {}, { orderId: rowObj.id, updatedData: rowObj });
-      if (r && r.success) showToast('Order saved'); else showToast('Save failed: ' + (r.error||''), 'error');
-    });
-  } catch (err) { showToast('Error loading orders: ' + err.message, 'error'); }
-}
-
-/**
- * renderTable - generic renderer for objects array
- * tableId: element id for table
- * data: array of objects
- * sheetName: (not used) for future features
- * primaryKey: header name used as primary key
- * onSave: async callback(rowObject) -> called when user saves row
- */
-function renderTable(tableId, data, sheetName, primaryKey, onSave){
-  const table = document.getElementById(tableId);
-  table.innerHTML = '';
-  if (!Array.isArray(data) || data.length === 0) { table.innerHTML = '<tr><td class="p-4">No data</td></tr>'; return; }
-  const headers = Object.keys(data[0]);
-  // header row
-  const thead = document.createElement('thead');
-  const htr = document.createElement('tr');
-  headers.forEach(h => {
-    const th = document.createElement('th'); th.className = 'text-left p-2 text-xs text-slate-300'; th.textContent = h; htr.appendChild(th);
-  });
-  const thActions = document.createElement('th'); thActions.className = 'p-2 text-xs text-slate-300'; thActions.textContent = 'Actions'; htr.appendChild(thActions);
-  thead.appendChild(htr);
-  table.appendChild(thead);
-
-  // body
-  const tbody = document.createElement('tbody');
-  data.forEach(row => {
-    const tr = document.createElement('tr'); tr.className = 'hover:bg-slate-800/60';
-    headers.forEach(h => {
-      const td = document.createElement('td'); td.className = 'p-2 text-sm';
-      // make primaryKey readonly
-      if (h === primaryKey) {
-        td.textContent = row[h];
-      } else {
-        const span = document.createElement('div');
-        span.contentEditable = true; span.className = 'px-1 py-0.5 rounded bg-transparent';
-        span.innerText = row[h] === null || row[h] === undefined ? '' : String(row[h]);
-        // store header name on element
-        span.dataset.col = h;
-        td.appendChild(span);
-      }
-      tr.appendChild(td);
-    });
-    // actions
-    const actionsTd = document.createElement('td'); actionsTd.className = 'p-2';
-    const saveBtn = document.createElement('button'); saveBtn.className = 'px-2 py-1 rounded bg-emerald-600 text-xs'; saveBtn.textContent = 'Save';
-    saveBtn.addEventListener('click', async ()=>{
-      // collect data from row
-      const newObj = {};
-      const tds = tr.querySelectorAll('td');
-      headers.forEach((h, idx) => {
-        if (h === primaryKey) newObj[h] = tds[idx].innerText.trim();
-        else newObj[h] = (tds[idx].querySelector('[contenteditable]') ? tds[idx].querySelector('[contenteditable]').innerText.trim() : tds[idx].innerText.trim());
-      });
+    async function callAppsScript(action, params = {}) {
       try {
-        await onSave(newObj);
-      } catch (err) { showToast('Save error: ' + err.message, 'error'); }
-    });
-    actionsTd.appendChild(saveBtn);
-    tr.appendChild(actionsTd);
+        const url = new URL(APPS_SCRIPT_WEB_APP_URL);
+        url.searchParams.set("action", action);
+        Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+        const res = await fetch(url);
+        return await res.json();
+      } catch (e) {
+        showMessage("❌ Error: " + e.message, true);
+        throw e;
+      }
+    }
 
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-}
+    async function loadSheet(sheetName, btn) {
+      // activate tab
+      [...tabsEl.children].forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
 
-</script>
+      currentSheet = sheetName;
+      showMessage("🔄 Loading " + sheetName + "...");
+
+      const data = await callAppsScript("getSheetData", { sheetName });
+      if (!data.success) {
+        showMessage("❌ Failed to load " + sheetName, true);
+        return;
+      }
+
+      currentData = data.rows;
+      renderTable(currentData);
+      showMessage("✅ Loaded " + sheetName);
+    }
+
+    function renderTable(rows) {
+      const container = document.getElementById("table-container");
+      if (!rows || rows.length === 0) {
+        container.innerHTML = "<p>No data.</p>";
+        return;
+      }
+
+      const headers = Object.keys(rows[0]);
+      let html = `<table class="min-w-full border text-sm"><thead><tr>`;
+      headers.forEach(h => {
+        html += `<th class="border px-2 py-1 bg-gray-100">${h}</th>`;
+      });
+      html += `<th class="border px-2 py-1 bg-gray-100">Actions</th>`;
+      html += `</tr></thead><tbody>`;
+
+      rows.forEach((row, i) => {
+        html += `<tr>`;
+        headers.forEach(h => {
+          html += `<td contenteditable="true" data-row="${i}" data-key="${h}" class="border px-2 py-1">${row[h] || ""}</td>`;
+        });
+        html += `<td class="border px-2 py-1">
+                   <button onclick="saveRow(${i})" class="bg-blue-500 text-white px-2 py-1 rounded">💾 Save</button>
+                 </td>`;
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    async function saveRow(index) {
+      const row = { ...currentData[index] };
+      // collect edited cells
+      document.querySelectorAll(`[data-row="${index}"]`).forEach(td => {
+        row[td.dataset.key] = td.innerText.trim();
+      });
+
+      // use "id" or "sku" or fallback first header
+      const pk = row.id || row.sku || row[Object.keys(row)[0]];
+      showMessage("🔄 Saving...");
+
+      const res = await callAppsScript("updateRowInSheet", {
+        sheetName: currentSheet,
+        primaryKeyHeader: row.id ? "id" : row.sku ? "sku" : Object.keys(row)[0],
+        primaryKeyValue: pk,
+        updatedData: JSON.stringify(row)
+      });
+
+      if (res.success) {
+        showMessage("✅ Row updated successfully");
+      } else {
+        showMessage("❌ Failed to update", true);
+      }
+    }
+
+    function showMessage(msg, isError = false) {
+      const m = document.getElementById("message");
+      m.innerText = msg;
+      m.className = "fixed bottom-4 right-4 p-3 rounded-2xl shadow " + 
+                    (isError ? "bg-red-500 text-white" : "bg-green-500 text-white");
+      m.style.display = "block";
+      setTimeout(() => m.style.display = "none", 3000);
+    }
+
+    // load first sheet on start
+    loadSheet(SHEETS[0], tabsEl.children[0]);
+  </script>
 </body>
 </html>
