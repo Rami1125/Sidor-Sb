@@ -636,7 +636,7 @@
                                 <button id="printOrderButton" class="glass-button flex-1"><i class="fas fa-print ml-2"></i>הדפס הזמנה</button>
                                 <button id="shareDeptWhatsappButton" class="glass-button flex-1"><i class="fab fa-whatsapp ml-2"></i>שתף (מחלקה)</button>
                                 <button id="shareCustomerWhatsappButton" class="glass-button flex-1"><i class="fab fa-whatsapp ml-2"></i>שתף (לקוח)</button>
-                                <button id="shareBranchWhatsappButton" class="glass-button flex-1 hidden"><i class="fab fa-whatsapp ml-2"></i>שתף (סניף)</button>
+                                <button id="shareBranchWhatsappButton" class="glass-button flex-1 hidden"><i class="fab fa fa-whatsapp ml-2"></i>שתף (סניף)</button>
                             </div>
                         </div>
 
@@ -684,6 +684,11 @@
             <i class="fas fa-print"></i>
         </button>
     </div>
+
+    <!-- Global Datalists (moved here to ensure they exist in the DOM) -->
+    <datalist id="productSuggestions"></datalist>
+    <datalist id="colorSuggestions"></datalist>
+
 
     <script>
         // *** חשוב: החלף ב-URL המדויק של פריסת ה-Apps Script Web App שלך! ***
@@ -977,7 +982,8 @@
 
             // For Department View, we are showing combined orders/inquiries
             // For other sheets (Customers, Products, etc.), we'll use a generic table renderer
-            if (sheetName === 'ניהול הזמנות/פניות') { // Special case for combined view
+            // The special "ניהול הזמנות/פניות" entry is a conceptual one for combined view, not a real sheet
+            if (sheetName === 'הזמנות') { // Default to Orders view for department, which triggers combined rendering
                 document.getElementById('departmentInterface').classList.remove('hidden'); // Ensure department interface is visible
                 document.getElementById('sheetsContent').classList.add('hidden'); // Hide generic content area
                 await loadDepartmentData();
@@ -1324,6 +1330,14 @@
         async function loadInitialData() {
             showLoading();
             try {
+                // Initial check for Apps Script connectivity
+                const testResult = await callAppsScript('testConnection');
+                if (!testResult || !testResult.message) {
+                    throw new Error('Apps Script testConnection failed. Check URL and deployment.');
+                }
+                console.log('Apps Script backend test connection successful:', testResult.message);
+
+
                 // Pre-fetch global data needed for forms/dropdowns
                 allProducts = await callAppsScript('getProducts');
                 allColors = await callAppsScript('getColorPalette');
@@ -1331,26 +1345,34 @@
 
                 // Populate product datalist
                 const productDatalist = document.getElementById('productSuggestions');
-                productDatalist.innerHTML = '';
-                allProducts.forEach(p => {
-                    const option = document.createElement('option');
-                    option.value = p['name'];
-                    productDatalist.appendChild(option);
-                });
+                if (productDatalist) {
+                    productDatalist.innerHTML = '';
+                    allProducts.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = p['name'];
+                        productDatalist.appendChild(option);
+                    });
+                } else {
+                    console.error("Datalist 'productSuggestions' not found.");
+                }
 
                 // Populate color datalist
                 const colorDatalist = document.getElementById('colorSuggestions');
-                colorDatalist.innerHTML = '';
-                allColors.forEach(c => {
-                    const option = document.createElement('option');
-                    option.value = `${c['color_code']} ${c['color_name']} (${c['brand']})`;
-                    colorDatalist.appendChild(option);
-                });
+                if (colorDatalist) {
+                    colorDatalist.innerHTML = '';
+                    allColors.forEach(c => {
+                        const option = document.createElement('option');
+                        option.value = `${c['color_code']} ${c['color_name']} (${c['brand']})`;
+                        colorDatalist.appendChild(option);
+                    });
+                } else {
+                    console.error("Datalist 'colorSuggestions' not found.");
+                }
 
 
             } catch (error) {
                 console.error('Failed to load initial global data:', error);
-                showMessageBox('שגיאה בטעינת נתוני יישום. אנא רענן את העמוד.');
+                showMessageBox(`שגיאה בטעינת נתוני יישום: ${error.message}. אנא ודא שה-Apps Script פרוס כראוי וה-URL נכון.`);
             } finally {
                 hideLoading();
             }
@@ -1400,31 +1422,21 @@
             itemDiv.className = 'flex flex-col md:flex-row gap-2 glass-card p-3 rounded-md relative';
             itemDiv.innerHTML = `
                 <input type="text" placeholder="שם מוצר" class="glass-input flex-1 product-name" value="${item.name}" required list="productSuggestions">
-                <datalist id="productSuggestions"></datalist>
                 <input type="number" placeholder="כמות" class="glass-input w-20" value="${item.qty}" min="1" required>
                 <input type="text" placeholder="יחידה" class="glass-input w-20" value="${item.unit}">
                 <input type="text" placeholder="גוון (קוד/שם)" class="glass-input flex-1 color-input" value="${item.color}" list="colorSuggestions">
-                <datalist id="colorSuggestions"></datalablist>
                 <button type="button" class="remove-item-button absolute top-2 left-2 text-red-500 hover:text-red-700">
                     <i class="fas fa-times-circle"></i>
                 </button>
             `;
 
             const productNameInput = itemDiv.querySelector('.product-name');
-            const productDatalist = document.getElementById('productSuggestions'); // Use the global datalist
-            productNameInput.setAttribute('list', 'productSuggestions'); // Link to global datalist
-
             productNameInput.addEventListener('change', () => { // Use change event to auto-fill unit
                 const selectedProduct = allProducts.find(p => p['name'] === productNameInput.value);
                 if (selectedProduct) {
                     itemDiv.querySelector('input[placeholder="יחידה"]').value = selectedProduct['unit'];
                 }
             });
-
-
-            const colorInput = itemDiv.querySelector('.color-input');
-            const colorDatalist = document.getElementById('colorSuggestions'); // Use the global datalist
-            colorInput.setAttribute('list', 'colorSuggestions'); // Link to global datalist
 
             itemDiv.querySelector('.remove-item-button').addEventListener('click', () => {
                 itemDiv.remove();
@@ -1459,17 +1471,33 @@
 
             currentOrderItems = collectOrderItems();
 
-            if (currentOrderItems.length === 0 && document.getElementById('orderType').value !== 'שאלה על מועד אספקה') {
-                showMessageBox('אנא הוסף לפחות פריט אחד להזמנה, או בחר בסוג פעולה "שאלה על מועד אספקה".');
+            // Additional validation for 'שאלה על מועד אספקה'
+            const orderType = document.getElementById('orderType').value;
+            if (currentOrderItems.length === 0 && orderType !== 'שאלה על מועד אספקה' && orderType !== 'אחר') {
+                showMessageBox('אנא הוסף לפחות פריט אחד להזמנה, או בחר בסוג פעולה "שאלה על מועד אספקה" / "אחר".');
                 hideLoading();
                 return;
             }
+
+            // If it's a "question" or "other" type, ensure no delivery details are required
+            if (orderType === 'שאלה על מועד אספקה' || orderType === 'אחר') {
+                 // Reset/clear values that are not relevant for inquiry types
+                 document.getElementById('deliveryAddress').value = '';
+                 document.getElementById('deliveryDate').value = '';
+                 document.getElementById('deliveryTime').value = '';
+                 document.getElementById('contactPerson').value = currentUser['name']; // Auto-fill
+                 document.getElementById('contactPhone').value = currentUser['phone']; // Auto-fill
+                 document.getElementById('handlingMethod').value = ''; // Clear handling method
+                 document.getElementById('branch').value = ''; // Clear branch
+                 currentOrderItems = []; // Clear items
+            }
+
 
             const orderData = {
                 customer_id: currentUser['id'],
                 customer_name: currentUser['name'],
                 customer_phone: currentUser['phone'],
-                order_type: document.getElementById('orderType').value,
+                order_type: orderType,
                 delivery_address: document.getElementById('deliveryAddress').value,
                 delivery_date: document.getElementById('deliveryDate').value,
                 delivery_time: document.getElementById('deliveryTime').value,
@@ -1492,7 +1520,10 @@
                     document.getElementById('orderForm').reset();
                     document.getElementById('orderItemsContainer').innerHTML = '';
                     currentOrderItems = [];
-                    document.getElementById('orderItemsContainer').appendChild(createItemRow()); // Add initial row
+                    // Only add initial item row if it's not an inquiry type
+                    if (orderType !== 'שאלה על מועד אספקה' && orderType !== 'אחר') {
+                        document.getElementById('orderItemsContainer').appendChild(createItemRow());
+                    }
                     showOrderFormStep(1);
                     showAppPage('customerHome');
                     await loadCustomerData();
@@ -1524,17 +1555,26 @@
                 return `<li>${productName}${itemColor}, כמות: ${item.qty} ${item.unit || ''}</li>`;
             }).join('');
 
-            summaryDiv.innerHTML = `
-                <p><strong>סוג פעולה:</strong> ${orderType}</p>
-                <p><strong>כתובת אספקה:</strong> ${deliveryAddress}</p>
-                <p><strong>תאריך אספקה:</strong> ${deliveryDate}</p>
-                <p><strong>שעות אספקה:</strong> ${deliveryTime}</p>
-                <p><strong>איש קשר:</strong> ${contactPerson} (טלפון: ${contactPhone})</p>
-                <p><strong>דרך טיפול:</strong> ${handlingMethod}</p>
-                ${handlingMethod === 'איסוף מסניף' && branch ? `<p><strong>סניף מטפל:</strong> ${BRANCH_INFO[branch]?.name || branch}</p>` : ''}
-                <p><strong>פריטים:</strong></p>
-                <ul class="list-disc pr-5">${itemsSummary || 'אין פריטים'}</ul>
-            `;
+            // Conditional rendering for inquiry types
+            if (orderType === 'שאלה על מועד אספקה' || orderType === 'אחר') {
+                summaryDiv.innerHTML = `
+                    <p><strong>סוג פעולה:</strong> ${orderType}</p>
+                    <p><strong>לקוח:</strong> ${currentUser['name']} (טלפון: ${currentUser['phone']})</p>
+                    <p class="mt-4 text-gray-600">בקשה זו תישלח למחלקת ההזמנות.</p>
+                `;
+            } else {
+                summaryDiv.innerHTML = `
+                    <p><strong>סוג פעולה:</strong> ${orderType}</p>
+                    <p><strong>כתובת אספקה:</strong> ${deliveryAddress}</p>
+                    <p><strong>תאריך אספקה:</strong> ${deliveryDate}</p>
+                    <p><strong>שעות אספקה:</strong> ${deliveryTime}</p>
+                    <p><strong>איש קשר:</strong> ${contactPerson} (טלפון: ${contactPhone})</p>
+                    <p><strong>דרך טיפול:</strong> ${handlingMethod}</p>
+                    ${handlingMethod === 'איסוף מסניף' && branch ? `<p><strong>סניף מטפל:</strong> ${BRANCH_INFO[branch]?.name || branch}</p>` : ''}
+                    <p><strong>פריטים:</strong></p>
+                    <ul class="list-disc pr-5">${itemsSummary || 'אין פריטים'}</ul>
+                `;
+            }
         }
 
         // --- Department Functions ---
@@ -1552,6 +1592,9 @@
                 if (updatedOrder.success) {
                     await showMessageBox(`סטטוס הזמנה #${orderId} עודכן ל: ${newStatus}.`);
                     await loadDepartmentData(); // Refresh list
+                    // Re-show details if the item is still in the list and selected
+                    const currentItemDetails = allDepartmentOrders.find(o => o['id'] === orderId);
+                    if (currentItemDetails) showDepartmentDetails({ type: 'order', ...currentItemDetails });
                     logBackendAction('Order Status Updated', { order_id: orderId, new_status: newStatus, updated_by: currentUserId });
                 }
             } catch (error) {
@@ -1575,6 +1618,9 @@
                 if (updatedOrder.success) {
                     await showMessageBox(`צפי הגעה להזמנה #${orderId} עודכן ל: ${newETA}.`);
                     await loadDepartmentData(); // Refresh list
+                     // Re-show details if the item is still in the list and selected
+                    const currentItemDetails = allDepartmentOrders.find(o => o['id'] === orderId);
+                    if (currentItemDetails) showDepartmentDetails({ type: 'order', ...currentItemDetails });
                     logBackendAction('Order ETA Updated', { order_id: orderId, new_eta: newETA, updated_by: currentUserId });
                 }
             } catch (error) {
@@ -1605,6 +1651,9 @@
                 if (updatedInquiry.success) {
                     await showMessageBox(`תגובתך לפניה #${inquiryId} נשלחה בהצלחה.`);
                     await loadDepartmentData(); // Refresh list
+                    // Re-show details if the item is still in the list and selected
+                    const currentItemDetails = allDepartmentInquiries.find(i => i['id'] === inquiryId);
+                    if (currentItemDetails) showDepartmentDetails({ type: 'inquiry', ...currentItemDetails });
                     logBackendAction('Chat Inquiry Response', { inquiry_id: inquiryId, response: responseText, updated_by: currentUserId });
                 }
             } catch (error) {
@@ -1765,9 +1814,90 @@
 
         // --- Event Listeners and Initial Load ---
 
+        // Make shareWhatsApp and printCurrentTable functions globally accessible for event listeners
+        window.shareWhatsApp = function() {
+            const currentTable = document.querySelector('.data-table'); // Get the currently rendered data table
+            if (!currentTable) {
+                showMessageBox('אין טבלה פעילה לשיתוף.');
+                return;
+            }
+
+            let message = `*נתונים מגיליון ${currentActiveSheet}*:\n\n`;
+
+            // Get headers
+            const headers = Array.from(currentTable.querySelectorAll('thead th')).map(th => th.textContent.trim());
+            // Filter out 'Actions' column if present
+            const filteredHeaders = headers.filter(h => h !== 'פעולות');
+            message += filteredHeaders.join(' | ') + '\n';
+
+            // Get data rows
+            Array.from(currentTable.querySelectorAll('tbody tr')).forEach(row => {
+                const rowData = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
+                // Filter out the last cell if it's the actions button cell
+                const filteredRowData = rowData.slice(0, filteredHeaders.length);
+                message += filteredRowData.join(' | ') + '\n';
+            });
+
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+        }
+
+        window.printCurrentTable = function() {
+            const currentTable = document.querySelector('.data-table'); // Get the currently rendered data table
+            if (!currentTable) {
+                showMessageBox('אין טבלה פעילה להדפסה.');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="he" dir="rtl">
+                <head>
+                    <title>הדפסת נתונים - ${currentActiveSheet}</title>
+                    <style>
+                        body { font-family: 'Inter', sans-serif; margin: 20mm; color: #333; direction: rtl; }
+                        h1 { text-align: center; margin-bottom: 20px; color: #000; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                        th { background-color: #f2f2f2; font-weight: bold; }
+                        @media print {
+                            /* Ensures table fits on page, if necessary */
+                            table { page-break-inside: auto; }
+                            tr { page-break-inside: avoid; page-break-after: auto; }
+                            thead { display: table-header-group; }
+                            tfoot { display: table-footer-group; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>נתונים מגיליון: ${currentActiveSheet}</h1>
+                    ${currentTable.outerHTML}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
-            await loadInitialData(); // Load products, colors, topics for forms
-            await checkLocalStorageAndLogin(); // Try to auto-login or show login page
+            // First, perform a test connection to the Apps Script backend
+            try {
+                const testResult = await callAppsScript('testConnection');
+                if (!testResult || !testResult.message) {
+                    throw new Error('Apps Script testConnection failed. Check URL and deployment.');
+                }
+                console.log('Apps Script backend test connection successful:', testResult.message);
+                // If test connection is successful, proceed with loading initial data and login
+                await loadInitialData(); // Load products, colors, topics for forms
+                await checkLocalStorageAndLogin(); // Try to auto-login or show login page
+            } catch (error) {
+                console.error('Critical initialization error:', error);
+                showMessageBox(`שגיאה קריטית באתחול: ${error.message}. אנא ודא שה-Apps Script פרוס כראוי, ה-URL נכון, ולמי יש גישה מוגדר ל"כל אחד".`);
+                hideLoading(); // Hide loading spinner if there's a critical error
+                return; // Stop further execution if backend is not reachable
+            }
+
 
             // --- Login Page Events ---
             document.getElementById('loginButton').addEventListener('click', handleLogin);
@@ -1778,10 +1908,39 @@
             document.getElementById('newOrderButton').addEventListener('click', () => {
                 showAppPage('newOrderFormPage');
                 showOrderFormStep(1); // Start new order form at step 1
+                // Auto-fill contact person/phone for new order if currentUser is available
+                if (currentUser) {
+                    document.getElementById('contactPerson').value = currentUser['name'];
+                    document.getElementById('contactPhone').value = currentUser['phone'];
+                }
+                // Add initial item row only if it's not an inquiry type
+                const orderType = document.getElementById('orderType').value;
+                if (orderType !== 'שאלה על מועד אספקה' && orderType !== 'אחר') {
+                    if (document.getElementById('orderItemsContainer').children.length === 0) {
+                        document.getElementById('orderItemsContainer').appendChild(createItemRow());
+                    }
+                } else {
+                    document.getElementById('orderItemsContainer').innerHTML = ''; // Clear items for inquiry
+                }
             });
             
             // Order Form Navigation
-            document.getElementById('nextStep1').addEventListener('click', () => showOrderFormStep(2));
+            document.getElementById('nextStep1').addEventListener('click', () => {
+                const orderType = document.getElementById('orderType').value;
+                if (!orderType) {
+                    showMessageBox('אנא בחר סוג פעולה.');
+                    document.getElementById('orderType').reportValidity(); // Show browser validation message
+                    return;
+                }
+                // If it's an inquiry type, skip delivery details and items sections
+                if (orderType === 'שאלה על מועד אספקה' || orderType === 'אחר') {
+                    showOrderFormStep(3); // Go straight to confirmation
+                    updateOrderSummary(); // Update summary for inquiry type
+                } else {
+                    showOrderFormStep(2);
+                }
+            });
+
             document.getElementById('prevStep2').addEventListener('click', () => showOrderFormStep(1));
             document.getElementById('nextStep2').addEventListener('click', () => {
                 const form = document.getElementById('orderForm');
@@ -1795,8 +1954,8 @@
                 });
                 if (allValid) {
                     currentOrderItems = collectOrderItems();
-                    if (currentOrderItems.length === 0 && document.getElementById('orderType').value !== 'שאלה על מועד אספקה') {
-                         showMessageBox('אנא הוסף לפחות פריט אחד להזמנה, או בחר בסוג פעולה "שאלה על מועד אספקה".');
+                    if (currentOrderItems.length === 0) { // Items are now strictly required for non-inquiry types here
+                         showMessageBox('אנא הוסף לפחות פריט אחד להזמנה.');
                          allValid = false;
                     }
                     if(allValid) {
@@ -1807,7 +1966,14 @@
                     showMessageBox('אנא מלא את כל השדות המסומנים כחובה.');
                 }
             });
-            document.getElementById('prevStep3').addEventListener('click', () => showOrderFormStep(2));
+            document.getElementById('prevStep3').addEventListener('click', () => {
+                const orderType = document.getElementById('orderType').value;
+                if (orderType === 'שאלה על מועד אספקה' || orderType === 'אחר') {
+                    showOrderFormStep(1); // Go back to step 1 for inquiry types
+                } else {
+                    showOrderFormStep(2);
+                }
+            });
             document.getElementById('orderForm').addEventListener('submit', submitOrder);
 
             // Add Item button for order form
@@ -1816,7 +1982,41 @@
                 currentOrderItems.push(newItem);
                 document.getElementById('orderItemsContainer').appendChild(createItemRow(newItem));
             });
-            document.getElementById('orderItemsContainer').appendChild(createItemRow()); // Add initial item row
+            // Initial item row will be added inside newOrderButton click or by offline data logic.
+
+            // Handle order type change to dynamically show/hide items section
+            document.getElementById('orderType').addEventListener('change', () => {
+                const orderType = document.getElementById('orderType').value;
+                const itemsSection = document.getElementById('itemsSection');
+                if (orderType === 'שאלה על מועד אספקה' || orderType === 'אחר') {
+                    itemsSection.classList.add('hidden');
+                    document.getElementById('orderItemsContainer').innerHTML = ''; // Clear items for inquiry
+                    currentOrderItems = [];
+                    // Disable required for delivery details if inquiry
+                    document.getElementById('deliveryAddress').removeAttribute('required');
+                    document.getElementById('deliveryDate').removeAttribute('required');
+                    document.getElementById('deliveryTime').removeAttribute('required');
+                    document.getElementById('contactPerson').removeAttribute('required');
+                    document.getElementById('contactPhone').removeAttribute('required');
+                    document.getElementById('handlingMethod').removeAttribute('required');
+                    document.getElementById('branch').removeAttribute('required');
+                } else {
+                    itemsSection.classList.remove('hidden');
+                    // Re-enable required for delivery details
+                    document.getElementById('deliveryAddress').setAttribute('required', 'true');
+                    document.getElementById('deliveryDate').setAttribute('required', 'true');
+                    document.getElementById('deliveryTime').setAttribute('required', 'true');
+                    document.getElementById('contactPerson').setAttribute('required', 'true');
+                    document.getElementById('contactPhone').setAttribute('required', 'true');
+                    document.getElementById('handlingMethod').setAttribute('required', 'true');
+                    // Add an initial item row if it's not an inquiry and no items are present
+                    if (document.getElementById('orderItemsContainer').children.length === 0) {
+                        document.getElementById('orderItemsContainer').appendChild(createItemRow());
+                    }
+                }
+                toggleBranchSelection(); // Re-evaluate branch visibility
+            });
+
 
             // Offline support (simple form data storage)
             document.getElementById('orderForm').addEventListener('input', () => {
@@ -1853,8 +2053,26 @@
                     });
                     currentOrderItems = data.items;
                 }
-                // showMessageBox('טופס הזמנה קודם שוחזר (שמור במצב לא מקוון).'); // Only show if user explicitly navigates to form
+                // Update visibility based on loaded order type
+                const loadedOrderType = document.getElementById('orderType').value;
+                if (loadedOrderType === 'שאלה על מועד אספקה' || loadedOrderType === 'אחר') {
+                    document.getElementById('itemsSection').classList.add('hidden');
+                } else {
+                    document.getElementById('itemsSection').classList.remove('hidden');
+                    // If no items loaded, add one initial row
+                    if (document.getElementById('orderItemsContainer').children.length === 0) {
+                        document.getElementById('orderItemsContainer').appendChild(createItemRow());
+                    }
+                }
+                toggleBranchSelection(); // Call on load after setting handlingMethod
+            } else {
+                // If no offline data and not an inquiry type, add one initial item row
+                const orderType = document.getElementById('orderType').value;
+                if (orderType !== 'שאלה על מועד אספקה' && orderType !== 'אחר' && document.getElementById('orderItemsContainer').children.length === 0) {
+                    document.getElementById('orderItemsContainer').appendChild(createItemRow());
+                }
             }
+
 
             // Toggle branch selection based on handling method
             document.getElementById('handlingMethod').addEventListener('change', toggleBranchSelection);
@@ -1873,6 +2091,20 @@
                     else if (page === 'newOrderFormPage') {
                         showAppPage(page);
                         showOrderFormStep(1);
+                        // Auto-fill contact person/phone for new order if currentUser is available
+                        if (currentUser) {
+                            document.getElementById('contactPerson').value = currentUser['name'];
+                            document.getElementById('contactPhone').value = currentUser['phone'];
+                        }
+                        // Add initial item row only if it's not an inquiry type
+                        const orderType = document.getElementById('orderType').value;
+                        if (orderType !== 'שאלה על מועד אספקה' && orderType !== 'אחר') {
+                            if (document.getElementById('orderItemsContainer').children.length === 0) {
+                                document.getElementById('orderItemsContainer').appendChild(createItemRow());
+                            }
+                        } else {
+                            document.getElementById('orderItemsContainer').innerHTML = ''; // Clear items for inquiry
+                        }
                     }
                      else {
                         showAppPage(page);
@@ -1958,8 +2190,9 @@
 
 
             // --- Global Sticky Action Buttons ---
-            document.getElementById('whatsappShareButton').addEventListener('click', shareWhatsApp);
-            document.getElementById('printCurrentTableButton').addEventListener('click', printCurrentTable);
+            // These are attached to the global sticky buttons, not specific table buttons
+            document.getElementById('whatsappShareButton').addEventListener('click', window.shareWhatsApp);
+            document.getElementById('printCurrentTableButton').addEventListener('click', window.printCurrentTable);
         });
     </script>
 </body>
