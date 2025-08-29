@@ -28,7 +28,7 @@
             border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             padding: 30px;
-            max-width: 500px;
+            max-width: 800px; /* הגדלנו את הרוחב כדי להכיל טבלה */
             width: 100%;
         }
         .button {
@@ -41,6 +41,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             cursor: pointer;
             margin-top: 20px;
+            margin-bottom: 10px; /* הוספה מרווח תחתון */
         }
         .button:hover {
             background: linear-gradient(135deg, #0056b3, #003d80);
@@ -72,18 +73,40 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Table styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            overflow: hidden; /* For rounded corners */
+        }
+        .data-table th, .data-table td {
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            padding: 8px 12px;
+            text-align: right;
+        }
+        .data-table th {
+            background-color: rgba(0, 123, 255, 0.2);
+            font-weight: 600;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="text-3xl font-bold mb-4 text-gray-800">בדיקת חיבור ל-Apps Script</h1>
-        <p class="text-gray-600 mb-6">לחץ על הכפתור למטה כדי לבדוק אם ה-Backend של Google Apps Script זמין.</p>
+        <p class="text-gray-600 mb-6">לחץ על הכפתור למטה כדי לבדוק אם ה-Backend של Google Apps Script זמין ולשלוף נתוני לקוחות.</p>
 
         <button id="testConnectionButton" class="button">בדוק חיבור</button>
+        <button id="getCustomersButton" class="button">שלוף נתוני לקוחות</button>
         <div id="loadingSpinner" class="loading-spinner"></div>
 
         <div id="result" class="result-box hidden">
-            <h2 class="font-semibold mb-2">תוצאה:</h2>
+            <h2 class="font-semibold mb-2" id="resultTitle">תוצאה:</h2>
             <pre id="resultContent" class="whitespace-pre-wrap"></pre>
         </div>
         <div id="error" class="result-box hidden bg-red-100 border-red-400 text-red-700">
@@ -96,39 +119,88 @@
         // *** חשוב: החלף את ה-URL הזה ב-URL החדש של פריסת ה-Apps Script Web App שלך! ***
         const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwasF7SCeWQm73McR79htGg9PfIyjZW3mR-1AmBaXZGhLD7hDK9ELymSeR-od-kxOl1Nw/exec';
 
+        // Utility function to reset display
+        function resetDisplay() {
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('loadingSpinner').style.display = 'block'; // Show spinner
+            document.getElementById('resultContent').innerHTML = ''; // Clear content
+            document.getElementById('errorContent').innerHTML = ''; // Clear error content
+            document.getElementById('resultTitle').textContent = 'תוצאה:'; // Reset title
+        }
+
         document.getElementById('testConnectionButton').addEventListener('click', async () => {
-            const resultDiv = document.getElementById('result');
-            const errorDiv = document.getElementById('error');
-            const resultContent = document.getElementById('resultContent');
-            const errorContent = document.getElementById('errorContent');
-            const loadingSpinner = document.getElementById('loadingSpinner');
-
-            resultDiv.classList.add('hidden');
-            errorDiv.classList.add('hidden');
-            loadingSpinner.style.display = 'block'; // Show spinner
-
+            resetDisplay();
             try {
-                // קריאה לפעולה 'testConnection' ב-Apps Script
                 const url = new URL(APPS_SCRIPT_WEB_APP_URL);
                 url.searchParams.append('action', 'testConnection');
 
                 const response = await fetch(url.toString());
                 const data = await response.json();
 
-                loadingSpinner.style.display = 'none'; // Hide spinner
+                document.getElementById('loadingSpinner').style.display = 'none'; // Hide spinner
 
                 if (response.ok && data.success) {
-                    resultContent.textContent = JSON.stringify(data, null, 2);
-                    resultDiv.classList.remove('hidden');
+                    document.getElementById('resultTitle').textContent = 'תוצאת בדיקת חיבור:';
+                    document.getElementById('resultContent').textContent = JSON.stringify(data, null, 2);
+                    document.getElementById('result').classList.remove('hidden');
                 } else {
-                    errorContent.textContent = data.error || `Received non-success response: ${JSON.stringify(data)}`;
-                    errorDiv.classList.remove('hidden');
+                    document.getElementById('errorContent').textContent = data.error || `Received non-success response: ${JSON.stringify(data)}`;
+                    document.getElementById('error').classList.remove('hidden');
                 }
             } catch (err) {
-                loadingSpinner.style.display = 'none'; // Hide spinner
-                errorContent.textContent = `Fetch Error: ${err.message}. Please check console for more details.`;
-                errorDiv.classList.remove('hidden');
+                document.getElementById('loadingSpinner').style.display = 'none'; // Hide spinner
+                document.getElementById('errorContent').textContent = `שגיאת Fetch: ${err.message}. אנא בדוק את הקונסול לפרטים נוספים.`;
+                document.getElementById('error').classList.remove('hidden');
                 console.error("Error during fetch:", err);
+            }
+        });
+
+        document.getElementById('getCustomersButton').addEventListener('click', async () => {
+            resetDisplay();
+            try {
+                const url = new URL(APPS_SCRIPT_WEB_APP_URL);
+                url.searchParams.append('action', 'getCustomersDataForTest');
+
+                const response = await fetch(url.toString());
+                const data = await response.json();
+
+                document.getElementById('loadingSpinner').style.display = 'none'; // Hide spinner
+
+                if (response.ok && data.success) {
+                    document.getElementById('resultTitle').textContent = 'נתוני לקוחות מגיליון:';
+                    if (data.data && data.data.length > 0) {
+                        const customers = data.data;
+                        const headers = Object.keys(customers[0]);
+
+                        let tableHtml = '<table class="data-table"><thead><tr>';
+                        headers.forEach(header => {
+                            tableHtml += `<th>${header}</th>`;
+                        });
+                        tableHtml += '</tr></thead><tbody>';
+
+                        customers.forEach(customer => {
+                            tableHtml += '<tr>';
+                            headers.forEach(header => {
+                                tableHtml += `<td>${customer[header]}</td>`;
+                            });
+                            tableHtml += '</tr>';
+                        });
+                        tableHtml += '</tbody></table>';
+                        document.getElementById('resultContent').innerHTML = tableHtml;
+                    } else {
+                        document.getElementById('resultContent').textContent = 'אין נתוני לקוחות בגיליון.';
+                    }
+                    document.getElementById('result').classList.remove('hidden');
+                } else {
+                    document.getElementById('errorContent').textContent = data.error || `Received non-success response: ${JSON.stringify(data)}`;
+                    document.getElementById('error').classList.remove('hidden');
+                }
+            } catch (err) {
+                document.getElementById('loadingSpinner').style.display = 'none'; // Hide spinner
+                document.getElementById('errorContent').textContent = `שגיאת Fetch בשליפת נתוני לקוחות: ${err.message}. אנא בדוק את הקונסול לפרטים נוספים.`;
+                document.getElementById('error').classList.remove('hidden');
+                console.error("Error during fetch customer data:", err);
             }
         });
     </script>
