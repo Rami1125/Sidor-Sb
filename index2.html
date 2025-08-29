@@ -3,221 +3,794 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>כלי בדיקה: עריכה ושמירה לגיליון Google Sheets</title>
-    <!-- Tailwind CSS CDN for basic styling -->
+    <title>ניהול נתונים - ח. סבן</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Rubik', sans-serif;
-            background-color: #0b1220; /* Dark background */
-            color: #e5e7eb; /* Light text */
-            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e0e5ec 100%);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background-color: #1a202c; /* Slightly lighter dark for container */
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+
+        /* Glassmorphism styles */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        table {
+
+        .glass-input, .glass-select, .glass-textarea {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #333;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .glass-input:focus, .glass-select:focus, .glass-textarea:focus {
+            outline: none;
+            border-color: rgba(0, 123, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .glass-button {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .glass-button:hover {
+            background: linear-gradient(135deg, #0056b3, #003d80);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .glass-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Nav Bar - for desktop sidebar */
+        .desktop-nav {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 4px 0 6px rgba(0, 0, 0, 0.05);
+            width: 200px;
+            padding: 20px 0;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            right: 0;
+            overflow-y: auto;
+        }
+        .desktop-nav .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #555;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+            border-right: 4px solid transparent;
+        }
+        .desktop-nav .nav-item:hover {
+            background: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+        }
+        .desktop-nav .nav-item.active {
+            background: rgba(0, 123, 255, 0.2);
+            color: #007bff;
+            border-right-color: #007bff;
+        }
+        .desktop-nav .nav-item i {
+            font-size: 1.2rem;
+            margin-left: 10px;
+        }
+
+        /* Mobile Bottom Nav */
+        .mobile-bottom-nav {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1000;
+        }
+        .mobile-bottom-nav .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #555;
+            font-size: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        .mobile-bottom-nav .nav-item:hover {
+            color: #007bff;
+            transform: translateY(-2px);
+        }
+        .mobile-bottom-nav .nav-item.active {
+            color: #007bff;
+            font-weight: 600;
+        }
+        .mobile-bottom-nav .nav-item i {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+
+        /* Table styles */
+        .data-table-container {
+            overflow-x: auto; /* Enable horizontal scrolling for tables on small screens */
+            margin-top: 15px;
+        }
+        .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            table-layout: fixed; /* Fix table layout for consistent column widths */
-        }
-        th, td {
-            border: 1px solid #4a5568; /* Darker border for table */
-            padding: 10px;
-            text-align: right;
-            white-space: nowrap; /* Prevent text wrapping in cells */
-            overflow: hidden; /* Hide overflow content */
-            text-overflow: ellipsis; /* Show ellipsis for overflow */
-        }
-        th {
-            background-color: #2d3748; /* Darker background for headers */
-            font-weight: bold;
-        }
-        td[contenteditable="true"]:focus {
-            outline: 2px solid #6366f1; /* Highlight editable cells on focus */
-            background-color: #374151; /* Darker background for editing */
-        }
-        .loading-message, .error-message, .success-message {
-            text-align: center;
-            font-size: 1.2rem;
-            margin-top: 20px;
-            padding: 10px;
+            background: rgba(255, 255, 255, 0.6);
             border-radius: 8px;
+            overflow: hidden; /* For rounded corners on the table */
+            min-width: 700px; /* Ensure table is wide enough for editing on mobile */
         }
-        .loading-message { color: #60a5fa; background-color: #1e3a8a; } /* Blue */
-        .error-message { color: #ef4444; background-color: #7f1d1d; } /* Red */
-        .success-message { color: #22c55e; background-color: #166534; } /* Green */
+        .data-table th, .data-table td {
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            padding: 8px 12px;
+            text-align: right;
+            position: relative;
+            vertical-align: top; /* Align content to top for editable cells */
+        }
+        .data-table th {
+            background-color: rgba(0, 123, 255, 0.2);
+            font-weight: 600;
+            white-space: nowrap; /* Prevent headers from wrapping */
+        }
+        .data-table td {
+            white-space: normal; /* Allow cell content to wrap if needed */
+        }
+        .data-table tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+        .data-table .editable-cell {
+            cursor: pointer;
+            min-width: 100px; /* Ensure editable cells have enough space */
+        }
+        .data-table .editable-input {
+            width: 100%;
+            padding: 4px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .data-table .save-button-cell {
+            text-align: center;
+            vertical-align: middle;
+            width: 80px;
+        }
+
+        /* Main Content Padding for Desktop */
+        @media (min-width: 768px) {
+            .main-content {
+                padding-right: 220px; /* Space for desktop nav */
+            }
+        }
+
+        /* Sticky Action Buttons */
+        .sticky-actions {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 999;
+        }
+        .sticky-actions .action-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        .sticky-actions .action-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        .whatsapp-btn { background: linear-gradient(135deg, #25D366, #128C7E); }
+        .print-btn { background: linear-gradient(135deg, #FF6F00, #FFD700); } /* Orange/Gold for print */
+
+        /* Message Box Styling */
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            z-index: 10001;
+            max-width: 90%;
+            min-width: 300px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            transform: translate(-50%, -45%); /* Initial slightly higher for slide-down effect */
+        }
+        .message-box.show {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Loading Spinner */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease-in-out;
+            opacity: 0;
+            pointer-events: none; /* Allows clicks through when hidden */
+        }
+        .loading-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #007bff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Print-specific styles */
+        @media print {
+            body { background: none; }
+            .desktop-nav, .mobile-bottom-nav, .sticky-actions, .message-box-overlay, .loading-overlay { display: none !important; }
+            .main-content { padding-right: 0 !important; margin: 0; width: 100%; }
+            .glass-card, .glass-input, .glass-select, .glass-textarea, .data-table {
+                background: none;
+                backdrop-filter: none;
+                box-shadow: none;
+                border: none;
+            }
+            .data-table { border: 1px solid #ccc; }
+            .data-table th, .data-table td { border: 1px solid #ddd; padding: 6px; }
+            .data-table th { background-color: #f2f2f2; }
+            h1, h2, h3 { color: #000 !important; }
+            .data-table-container { overflow-x: visible; }
+        }
     </style>
 </head>
-<body>
+<body class="flex flex-col h-screen">
 
-    <div class="container">
-        <h1 class="text-3xl font-bold mb-6 text-center">כלי בדיקה: נתוני הזמנות</h1>
-        
-        <div id="messages" class="mb-4">
-            <!-- הודעות טעינה/שגיאה/הצלחה יוצגו כאן -->
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Message Box Element -->
+    <div id="messageBoxOverlay" class="message-box-overlay"></div>
+    <div id="messageBox" class="message-box">
+        <p id="messageBoxText" class="mb-4 text-lg"></p>
+        <button id="messageBoxCloseBtn" class="glass-button px-6 py-2">אישור</button>
+    </div>
+
+    <!-- Desktop Navigation Sidebar -->
+    <nav id="desktopNav" class="desktop-nav hidden md:block">
+        <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">ח. סבן</h2>
+        <div id="navItemsContainer">
+            <!-- Nav items will be dynamically loaded here -->
         </div>
+    </nav>
 
-        <div class="flex justify-center gap-4 mb-6">
-            <button id="refreshDataBtn" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors">
-                רענן נתונים
-            </button>
-            <button id="saveChangesBtn" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition-colors">
-                שמור שינויים
-            </button>
-        </div>
+    <!-- Main Content Area -->
+    <div class="flex-grow p-4 main-content">
+        <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <h1 id="pageTitle" class="text-3xl font-bold text-gray-900 mb-6 text-center md:text-right">ניהול נתונים</h1>
 
-        <div id="data-table-container" class="min-h-[200px] flex items-center justify-center overflow-x-auto">
-            <p class="loading-message">לחץ על 'רענן נתונים' כדי לטעון נתונים מהגיליון...</p>
+            <!-- Content for each sheet will be loaded here -->
+            <div id="sheetsContent" class="glass-card p-6">
+                <!-- Data tables will be rendered here dynamically -->
+                <p class="text-center text-gray-500 text-lg mt-10">בחר גיליון מהתפריט כדי להציג נתונים.</p>
+            </div>
         </div>
     </div>
 
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav id="mobileBottomNav" class="mobile-bottom-nav md:hidden">
+        <!-- Mobile nav items will be dynamically loaded here (max 5-6) -->
+    </nav>
+
+    <!-- Sticky WhatsApp and Print Buttons -->
+    <div class="sticky-actions">
+        <button id="whatsappShareButton" class="action-button whatsapp-btn">
+            <i class="fab fa-whatsapp"></i>
+        </button>
+        <button id="printCurrentTableButton" class="action-button print-btn">
+            <i class="fas fa-print"></i>
+        </button>
+    </div>
+
     <script>
-        // פרטי הגיליון וה-API שסופקו
-        const SHEET_ID = '1uxUQGElkh7BSy73DnmU1lb0DW7kiS4otLFOVJzrSMBA'; // מזהה הגיליון שלך (עם 'E' בסוף)
-        const API_URL = "https://script.google.com/macros/s/AKfycbwhW3dTErflCH0OrvMnyh4Npp8fu7ZxzKzv8wGMQj2D6-cYjAPY7CdQacgy3FcBtpFE/exec"; // כתובת ה-URL של Apps Script
-        const API_TOKEN = "12345ABC"; // טוקן ה-API שלך
+        // *** IMPORTANT: REPLACE WITH YOUR DEPLOYED APPS SCRIPT WEB APP URL! ***
+        const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyAgrNuCmuxAMhg5QSFZvVMckwdeVvFDy7TX_4FKhkw8-ornUyGBltCYfnlMPXetEOHzw/exec';
 
-        let currentFetchedData = []; // נתונים אחרונים שנטענו, ישמשו לעקוב אחר ID של שורות
+        // Global state
+        let currentActiveSheet = 'לקוחות'; // Default active sheet
+        let currentUserId = 'UNKNOWN_USER'; // Placeholder, will be updated by login if implemented
+        let sheetDataCache = {}; // Cache to store fetched data
+        const SHEET_CONFIG = {
+            'לקוחות': { icon: 'fa-users', fetchAction: 'getCustomers', updateAction: 'updateCustomer', primaryKey: 'id' },
+            'הזמנות': { icon: 'fa-box', fetchAction: 'getOrders', updateAction: 'updateOrder', primaryKey: 'id' },
+            'מוצרים': { icon: 'fa-boxes', fetchAction: 'getProducts', updateAction: 'updateProduct', primaryKey: 'sku' },
+            'מניפת_צבעים': { icon: 'fa-palette', fetchAction: 'getColorPalette', updateAction: 'updateColor', primaryKey: 'color_code' },
+            'צ_אט_פניות': { icon: 'fa-comments', fetchAction: 'getInquiries', updateAction: 'updateInquiry', primaryKey: 'id' },
+            'נושאי_פנייה': { icon: 'fa-tags', fetchAction: 'getInquiryTopics', updateAction: null, primaryKey: 'topic' }, // No update for topics
+            'Logs': { icon: 'fa-clipboard-list', fetchAction: 'getOrders', updateAction: null, primaryKey: 'timestamp' } // Logs are read-only
+        };
 
-        const messagesDiv = document.getElementById('messages');
-        const dataTableContainer = document.getElementById('data-table-container');
+        // --- Utility Functions ---
 
-        // פונקציית עזר להצגת הודעות למשתמש
-        function showMessage(message, type = 'info') {
-            let bgColorClass, textColorClass;
-            switch(type) {
-                case 'loading': bgColorClass = 'bg-blue-900'; textColorClass = 'text-blue-200'; break;
-                case 'error': bgColorClass = 'bg-red-900'; textColorClass = 'text-red-200'; break;
-                case 'success': bgColorClass = 'bg-green-900'; textColorClass = 'text-green-200'; break;
-                default: bgColorClass = 'bg-gray-800'; textColorClass = 'text-gray-200'; break;
-            }
-            messagesDiv.innerHTML = `<p class="${bgColorClass} ${textColorClass} loading-message">${message}</p>`;
+        /**
+         * Shows the loading spinner.
+         */
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
         }
 
-        // פונקציית עזר לשליחת בקשות ל-Apps Script
-        async function callAppsScriptApi(action, payload) {
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CRM-TOKEN': API_TOKEN },
-                    body: JSON.stringify({ action, payload })
-                });
-                const data = await response.json();
-                if (!data.ok) {
-                    throw new Error(data.error || 'Apps Script API error');
+        /**
+         * Hides the loading spinner.
+         */
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
+
+        /**
+         * Shows a custom message box.
+         * @param {string} message The message to display.
+         * @returns {Promise<void>} A promise that resolves when the user closes the message box.
+         */
+        function showMessageBox(message) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('messageBoxOverlay');
+                const messageBox = document.getElementById('messageBox');
+                const messageBoxText = document.getElementById('messageBoxText');
+                const messageBoxCloseBtn = document.getElementById('messageBoxCloseBtn');
+
+                messageBoxText.textContent = message;
+                overlay.style.display = 'block';
+                messageBox.style.display = 'block';
+                setTimeout(() => messageBox.classList.add('show'), 10); // Add show class after display block
+
+                const closeHandler = () => {
+                    messageBox.classList.remove('show');
+                    overlay.style.display = 'none';
+                    messageBox.style.display = 'none';
+                    messageBoxCloseBtn.removeEventListener('click', closeHandler);
+                    resolve();
+                };
+                messageBoxCloseBtn.addEventListener('click', closeHandler);
+            });
+        }
+
+        /**
+         * Simulates a fetch request to the Apps Script Web App.
+         * Includes exponential backoff for retries.
+         * @param {string} action The action to perform.
+         * @param {Object} params Parameters for GET request.
+         * @param {Object} body Data for POST request.
+         * @param {number} retries Number of retries.
+         * @returns {Promise<Object>} JSON response from Apps Script.
+         */
+        async function callAppsScript(action, params = {}, body = null, retries = 3) {
+            const url = new URL(APPS_SCRIPT_WEB_APP_URL);
+            url.searchParams.append('action', action);
+            for (const key in params) {
+                url.searchParams.append(key, params[key]);
+            }
+
+            const options = {
+                method: body ? 'POST' : 'GET',
+                headers: {}
+            };
+
+            if (body) {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(body);
+            }
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url.toString(), options);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`Fetch failed for action '${action}' with status ${response.status}: ${errorText}`);
+                        throw new Error(`Apps Script backend error ${response.status}: ${errorText}`);
+                    }
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.error || 'Unknown error from server');
+                    }
+                    return result.data || result;
+                } catch (error) {
+                    if (i < retries - 1) {
+                        const delay = Math.pow(2, i) * 1000;
+                        console.warn(`Retrying action '${action}' in ${delay / 1000}s due to error: ${error.message}`);
+                        await new Promise(res => setTimeout(res, delay));
+                    } else {
+                        console.error(`Failed to call Apps Script action '${action}' after ${retries} retries:`, error);
+                        throw error;
+                    }
                 }
-                return data.data;
-            } catch (error) {
-                console.error('שגיאה בתקשורת עם Apps Script:', error);
-                throw new Error(`שגיאה בתקשורת עם Apps Script: ${error.message}`);
             }
         }
 
-        // פונקציה לשליפת נתונים מהגיליון
-        async function fetchData() {
-            showMessage('טוען נתונים מהגיליון...', 'loading');
+        // --- UI Rendering ---
+
+        /**
+         * Generates a navigation item.
+         * @param {string} sheetName The name of the sheet.
+         * @param {string} iconClass Font Awesome icon class.
+         * @param {boolean} isMobile If true, generates for mobile nav.
+         * @returns {HTMLElement} The navigation item element.
+         */
+        function createNavItem(sheetName, iconClass, isMobile = false) {
+            const navItem = document.createElement('div');
+            navItem.className = `nav-item ${isMobile ? '' : 'flex'} items-center px-4 py-2 rounded-md ${sheetName === currentActiveSheet ? 'active' : ''}`;
+            navItem.dataset.sheet = sheetName;
+            navItem.innerHTML = `<i class="fas ${iconClass} ${isMobile ? '' : 'ml-2'}"></i><span>${sheetName}</span>`;
+            navItem.addEventListener('click', () => switchSheet(sheetName));
+            return navItem;
+        }
+
+        /**
+         * Populates navigation bars.
+         */
+        function populateNav() {
+            const desktopNavContainer = document.getElementById('navItemsContainer');
+            const mobileNavContainer = document.getElementById('mobileBottomNav');
+            desktopNavContainer.innerHTML = '';
+            mobileNavContainer.innerHTML = '';
+
+            let mobileNavCount = 0;
+            for (const sheetName in SHEET_CONFIG) {
+                if (SHEET_CONFIG.hasOwnProperty(sheetName)) {
+                    const config = SHEET_CONFIG[sheetName];
+                    // Desktop Nav
+                    desktopNavContainer.appendChild(createNavItem(sheetName, config.icon, false));
+
+                    // Mobile Nav (limit to 5-6 items, or choose important ones)
+                    if (mobileNavCount < 5 || ['לקוחות', 'הזמנות'].includes(sheetName)) { // Example: always include Customers and Orders
+                         mobileNavContainer.appendChild(createNavItem(sheetName, config.icon, true));
+                         mobileNavCount++;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Switches the currently displayed sheet.
+         * @param {string} sheetName The name of the sheet to switch to.
+         */
+        async function switchSheet(sheetName) {
+            currentActiveSheet = sheetName;
+            document.getElementById('pageTitle').textContent = `ניהול: ${sheetName}`;
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.sheet === sheetName) {
+                    item.classList.add('active');
+                }
+            });
+
+            await loadAndRenderSheetData(sheetName);
+        }
+
+        /**
+         * Loads data for a given sheet and renders it as an editable table.
+         * @param {string} sheetName The name of the sheet.
+         */
+        async function loadAndRenderSheetData(sheetName) {
+            showLoading();
+            const sheetsContentDiv = document.getElementById('sheetsContent');
+            sheetsContentDiv.innerHTML = `<p class="text-center text-gray-500 text-lg mt-10">טוען נתונים עבור ${sheetName}...</p>`;
+
             try {
-                const fetchedData = await callAppsScriptApi('fetchOrders', { sheetId: SHEET_ID });
-                
-                if (!fetchedData || fetchedData.length === 0) {
-                    dataTableContainer.innerHTML = '<p class="error-message">לא נמצאו נתונים בגיליון.</p>';
-                    currentFetchedData = [];
+                const config = SHEET_CONFIG[sheetName];
+                if (!config || !config.fetchAction) {
+                    throw new Error(`No fetch action defined for sheet: ${sheetName}`);
+                }
+
+                const data = await callAppsScript(config.fetchAction);
+                sheetDataCache[sheetName] = data; // Cache the data
+
+                sheetsContentDiv.innerHTML = ''; // Clear loading message
+
+                if (!data || data.length === 0) {
+                    sheetsContentDiv.innerHTML = `<p class="text-center text-gray-500 text-lg mt-10">אין נתונים בגיליון ${sheetName}.</p>`;
+                    hideLoading();
                     return;
                 }
 
-                currentFetchedData = fetchedData; // שמור את הנתונים שנטענו
-                
-                // ההנחה היא ש-Apps Script מחזיר מערך של אובייקטים, כאשר האובייקט הראשון הוא הכותרות
-                // נשתמש ב-Object.keys מהאובייקט הראשון כדי לקבל את הכותרות
-                const headers = Object.keys(fetchedData[0]); 
+                const headers = Object.keys(data[0]);
+                const tableContainer = document.createElement('div');
+                tableContainer.className = 'data-table-container';
+                const table = document.createElement('table');
+                table.className = 'data-table';
+                table.id = `${sheetName}Table`;
 
-                let tableHtml = '<table class="min-w-full divide-y divide-gray-700">';
-                // בניית כותרות הטבלה
-                tableHtml += '<thead><tr>';
+                // Table Header
+                let thead = '<thead><tr>';
                 headers.forEach(header => {
-                    tableHtml += `<th class="px-4 py-2 text-white text-sm uppercase font-semibold">${header}</th>`;
+                    thead += `<th>${header}</th>`;
                 });
-                tableHtml += '</tr></thead>';
+                if (config.updateAction) { // Add an 'Actions' column if editable
+                    thead += `<th class="w-20">פעולות</th>`;
+                }
+                thead += '</tr></thead>';
+                table.innerHTML = thead;
 
-                // בניית שורות הנתונים הניתנות לעריכה
-                tableHtml += '<tbody class="divide-y divide-gray-700">';
-                fetchedData.forEach((rowObject, rowIndex) => {
-                    tableHtml += `<tr data-row-id="${rowObject.id}">`; // נשתמש ב-ID של השורה
+                // Table Body
+                let tbody = '<tbody>';
+                data.forEach((rowData, rowIndex) => {
+                    tbody += `<tr data-row-id="${rowData[config.primaryKey]}">`;
                     headers.forEach(header => {
-                        const cellValue = rowObject[header] !== undefined ? rowObject[header] : '';
-                        // כל תא, למעט ה-ID, יהיה ניתן לעריכה
-                        const isEditable = header.toLowerCase() !== 'id' ? 'contenteditable="true"' : ''; 
-                        tableHtml += `<td class="px-4 py-2 text-white/90 text-sm" ${isEditable}>${cellValue}</td>`;
+                        tbody += `<td class="editable-cell" data-column="${header}">${rowData[header]}</td>`;
                     });
-                    tableHtml += '</tr>';
+                    if (config.updateAction) {
+                        tbody += `
+                            <td class="save-button-cell">
+                                <button class="glass-button text-sm px-3 py-1 save-row-btn hidden" data-row-id="${rowData[config.primaryKey]}">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                            </td>`;
+                    }
+                    tbody += '</tr>';
                 });
-                tableHtml += '</tbody></table>';
+                tbody += '</tbody>';
+                table.innerHTML += tbody;
+                tableContainer.appendChild(table);
+                sheetsContentDiv.appendChild(tableContainer);
 
-                dataTableContainer.innerHTML = tableHtml;
-                showMessage('הנתונים נטענו בהצלחה. ניתן לערוך את התאים בטבלה וללחוץ "שמור שינויים".', 'success');
+                // Make cells editable if sheet is configured for updates
+                if (config.updateAction) {
+                    table.querySelectorAll('.editable-cell').forEach(cell => {
+                        cell.addEventListener('dblclick', () => makeCellEditable(cell, config.primaryKey));
+                    });
+                }
 
             } catch (error) {
-                console.error('שגיאה בשליפת נתונים:', error);
-                dataTableContainer.innerHTML = ''; // נקה טבלה
-                showMessage(`שגיאה בטעינת הנתונים: ${error.message}. אנא ודא שה-API_URL וה-API_TOKEN נכונים, ושקוד ה-Apps Script פורסם עם הרשאות 'כל אחד'.`, 'error');
+                console.error(`Error loading data for ${sheetName}:`, error);
+                sheetsContentDiv.innerHTML = `<p class="text-center text-red-500 text-lg mt-10">שגיאה בטעינת נתונים עבור ${sheetName}: ${error.message}</p>`;
+                showMessageBox(`שגיאה בטעינת נתונים: ${error.message}`);
+            } finally {
+                hideLoading();
             }
         }
 
-        // פונקציה לשמירת שינויים חזרה לגיליון
-        async function saveChanges() {
-            showMessage('שומר שינויים לגיליון...', 'loading');
-            const table = dataTableContainer.querySelector('table');
-            if (!table) {
-                showMessage('אין טבלה לשמירה.', 'error');
+
+        /**
+         * Converts a table cell into an editable input field.
+         * @param {HTMLElement} cell The table cell to make editable.
+         * @param {string} primaryKey The primary key column name for the sheet.
+         */
+        function makeCellEditable(cell, primaryKey) {
+            if (cell.querySelector('input')) return; // Already editing
+
+            const originalValue = cell.textContent.trim();
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'editable-input';
+            input.value = originalValue;
+
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            input.focus();
+
+            const row = cell.closest('tr');
+            const saveButton = row.querySelector('.save-row-btn');
+            if (saveButton) {
+                saveButton.classList.remove('hidden'); // Show save button for the row
+            }
+
+            // Save on blur or Enter key
+            const saveChanges = async () => {
+                const newValue = input.value.trim();
+                if (newValue !== originalValue) {
+                    const rowId = row.dataset.rowId;
+                    const column = cell.dataset.column;
+                    const config = SHEET_CONFIG[currentActiveSheet];
+
+                    const updatedData = {};
+                    updatedData[config.primaryKey] = rowId; // Primary key for lookup
+                    updatedData[column] = newValue; // The changed value
+
+                    try {
+                        showLoading();
+                        // For update actions, we pass primary key separately, and then updatedData
+                        const payload = {
+                            id: rowId, // Primary key for customer/order/inquiry
+                            sku: rowId, // Primary key for product
+                            color_code: rowId, // Primary key for color
+                            updatedData: { [column]: newValue }
+                        };
+
+                        // Use the specific primaryKey defined in SHEET_CONFIG for the payload
+                        if (config.primaryKey === 'id') payload.id = rowId;
+                        else if (config.primaryKey === 'sku') payload.sku = rowId;
+                        else if (config.primaryKey === 'color_code') payload.color_code = rowId;
+
+                        await callAppsScript(config.updateAction, {}, payload);
+                        await showMessageBox(`הנתון עודכן בהצלחה בגיליון ${currentActiveSheet}.`);
+                        // Re-render the current sheet to reflect changes and hide buttons
+                        await loadAndRenderSheetData(currentActiveSheet);
+                    } catch (error) {
+                        console.error('Error saving changes:', error);
+                        showMessageBox(`שגיאה בעדכון הנתון: ${error.message}`);
+                        cell.textContent = originalValue; // Revert on error
+                    } finally {
+                        hideLoading();
+                    }
+                } else {
+                    cell.textContent = originalValue; // Revert if no change
+                }
+                if (saveButton) {
+                    saveButton.classList.add('hidden'); // Hide save button
+                }
+            };
+
+            input.addEventListener('blur', saveChanges);
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    input.blur(); // Trigger blur to save changes
+                }
+            });
+
+            // If save button is clicked for this row
+            saveButton.onclick = saveChanges;
+        }
+
+        /**
+         * Shares the current table data via WhatsApp.
+         */
+        function shareWhatsApp() {
+            const currentTable = document.getElementById(`${currentActiveSheet}Table`);
+            if (!currentTable) {
+                showMessageBox('אין טבלה פעילה לשיתוף.');
                 return;
             }
 
-            const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
-            const rows = table.querySelectorAll('tbody tr');
-            const updatedOrders = [];
+            let message = `*נתונים מגיליון ${currentActiveSheet}*:\n\n`;
 
-            // עבור על כל שורה בטבלה
-            for (const row of rows) {
-                const rowId = row.dataset.rowId;
-                const cells = Array.from(row.querySelectorAll('td'));
-                const newOrderData = { id: rowId }; // תמיד מתחילים עם ה-ID של השורה
+            // Get headers
+            const headers = Array.from(currentTable.querySelectorAll('thead th')).map(th => th.textContent.trim());
+            // Filter out 'Actions' column if present
+            const filteredHeaders = headers.filter(h => h !== 'פעולות');
+            message += filteredHeaders.join(' | ') + '\n';
 
-                // קבץ את הנתונים החדשים מהתאים הערוכים
-                headers.forEach((header, index) => {
-                    newOrderData[header] = cells[index].textContent.trim();
-                });
-                updatedOrders.push(newOrderData);
+            // Get data rows
+            Array.from(currentTable.querySelectorAll('tbody tr')).forEach(row => {
+                const rowData = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
+                // Filter out the last cell if it's the actions button cell
+                const filteredRowData = rowData.slice(0, filteredHeaders.length);
+                message += filteredRowData.join(' | ') + '\n';
+            });
+
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+        }
+
+        /**
+         * Prints the current table.
+         */
+        function printCurrentTable() {
+            const currentTable = document.getElementById(`${currentActiveSheet}Table`);
+            if (!currentTable) {
+                showMessageBox('אין טבלה פעילה להדפסה.');
+                return;
             }
 
-            try {
-                // שלח כל הזמנה מעודכנת בנפרד (או שקול לשלוח מערך אם ה-Apps Script תומך בכך)
-                for (const order of updatedOrders) {
-                    await callAppsScriptApi('updateOrder', order);
-                }
-                showMessage('השינויים נשמרו בהצלחה!', 'success');
-            } catch (error) {
-                console.error('שגיאה בשמירת נתונים:', error);
-                showMessage(`שגיאה בשמירת הנתונים: ${error.message}.`, 'error');
-            }
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="he" dir="rtl">
+                <head>
+                    <title>הדפסת נתונים - ${currentActiveSheet}</title>
+                    <style>
+                        body { font-family: 'Inter', sans-serif; margin: 20mm; color: #333; direction: rtl; }
+                        h1 { text-align: center; margin-bottom: 20px; color: #000; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                        th { background-color: #f2f2f2; font-weight: bold; }
+                        @media print {
+                            /* Ensures table fits on page, if necessary */
+                            table { page-break-inside: auto; }
+                            tr { page-break-inside: avoid; page-break-after: auto; }
+                            thead { display: table-header-group; }
+                            tfoot { display: table-footer-group; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>נתונים מגיליון: ${currentActiveSheet}</h1>
+                    ${currentTable.outerHTML}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
         }
 
 
-        // מאזיני אירועים לכפתורים
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('refreshDataBtn').addEventListener('click', fetchData);
-            document.getElementById('saveChangesBtn').addEventListener('click', saveChanges);
-            // טען נתונים אוטומטית בפעם הראשונה
-            fetchData();
+        // --- Event Listeners and Initial Load ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            populateNav(); // Render navigation bars
+            await switchSheet(currentActiveSheet); // Load default sheet data
+
+            // Sticky action buttons
+            document.getElementById('whatsappShareButton').addEventListener('click', shareWhatsApp);
+            document.getElementById('printCurrentTableButton').addEventListener('click', printCurrentTable);
         });
     </script>
-
 </body>
 </html>
