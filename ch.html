@@ -1,0 +1,258 @@
+# אפליקציה דינמית לח.סבן — Deliverables
+
+מסמך זה מכיל: **קוד front (index.html + CSS + JS)**, **Code.gs** (Google Apps Script), **סכמות גליונות** (Google Sheets) עם שורות דוגמה, והוראות פריסה מפורטות.
+
+> שים לב: זהו פרויקט דמו/יחסית קומפקטי שנועד להתחיל במהירות. ניתן להרחיב, לאבטח ולהסכים ל-UX מדויק בפרקים הבאים.
+
+---
+
+## 1) קבצים שנמצאים כאן
+
+* `index.html` — קובץ ה-Front הכולל HTML/CSS/JS (כלול בקובץ אחד עבור נוחות).
+* `Code.gs` — סקריפט צד-שרת ל-CRUD על הגיליונות, חיפוש, לוגים ושחרור תבנית וואטסאפ.
+* `SHEETS_SCHEMA.md` — תיאור סכמות הגיליונות ודוגמאות.
+* `DEPLOY.md` — הוראות פריסה קצרות.
+
+---
+
+## index.html
+
+```html
+<!doctype html>
+<html lang="he">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ח. סבן - ממשק לקוח</title>
+  <style>
+    /* בסיסי - Glassmorphism מינימלי */
+    :root{--bg:#0f1724;--card:rgba(255,255,255,0.06);--glass:rgba(255,255,255,0.06);--accent:#0ea5a4}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    body{background:linear-gradient(180deg,#071022 0%,#0b1220 100%);color:#e6eef8;display:flex;align-items:center;justify-content:center;padding:18px}
+    .app{width:100%;max-width:980px;background:var(--card);border-radius:14px;padding:16px;backdrop-filter: blur(8px);box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    header{display:flex;align-items:center;gap:12px}
+    .brand{font-size:18px;font-weight:700}
+    .login{display:flex;gap:8px;align-items:center}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:12px;border-radius:12px;margin-top:12px}
+    input,select,textarea,button{font-size:15px;padding:8px;border-radius:8px;border:0;background:transparent;color:inherit}
+    input,select,textarea{background:rgba(255,255,255,0.03);width:100%}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:12px}
+    .nav{display:flex;justify-content:space-around;padding:8px 0}
+    .nav button{flex:1;margin:0 6px}
+    .footer-nav{position:sticky;bottom:0}
+    .keywords{display:flex;gap:8px;flex-wrap:wrap}
+    .keyword{background:rgba(255,255,255,0.04);padding:8px 12px;border-radius:999px;cursor:pointer}
+    .progress{height:8px;background:rgba(255,255,255,0.04);border-radius:99px;overflow:hidden}
+    .progress > i{display:block;height:100%;width:40%;background:linear-gradient(90deg,var(--accent),#34d399);animation:load 1.4s ease-in-out}
+    @keyframes load{0%{transform:translateX(-20%)}100%{transform:translateX(0)}}
+    .items-list{max-height:300px;overflow:auto}
+    .small{font-size:13px;color:#cbd5e1}
+    .tooltip{position:relative}
+    .tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:110%;left:0;background:#0b1220;padding:6px;border-radius:6px;color:#fff;white-space:nowrap;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div>
+        <div class="brand">ח. סבן • הזמנות</div>
+        <div class="small">ממשק לקוחות וניהול הזמנות</div>
+      </div>
+      <div style="margin-left:auto" class="login">
+        <input id="username" placeholder="שם משתמש/טלפון" />
+        <input id="password" placeholder="סיסמה" type="password" />
+        <button id="btnLogin">כניסה</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <main>
+        <div class="card" id="mainArea">
+          <h3 id="welcome">אנא היכנס/י</h3>
+          <div id="clientCard" style="display:none">
+            <div class="small">כרטיס לקוח</div>
+            <div id="clientName" style="font-weight:700;font-size:16px"></div>
+            <div class="small" id="clientPhone"></div>
+            <div style="margin-top:8px" class="keywords" id="quickActions">
+              <!-- מילות מפתח דינמיות -->
+            </div>
+            <div style="margin-top:12px">
+              <button id="btnNewOrder">הזמנה חדשה</button>
+              <button id="btnHistory">היסטוריה</button>
+            </div>
+          </div>
+
+          <div id="orderForm" style="display:none;margin-top:12px">
+            <div class="progress"><i></i></div>
+            <h4>טופס הזמנה חדשה</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <input id="contactName" placeholder="איש קשר" />
+              <input id="contactPhone" placeholder="טלפון לקבלת סחורה" />
+              <select id="actionType">
+                <option value="הצבה">הצבה</option>
+                <option value="החלפה">החלפה</option>
+                <option value="איסוף">איסוף מסניף</option>
+                <option value="הובלה">הובלה/מנוף</option>
+                <option value="שאלה">שאלה</option>
+              </select>
+              <select id="branch">
+                <option value="התלמיד">התלמיד - התלמיד 6, הוד השרון</option>
+                <option value="החרש">החרש - החרש 10, הוד השרון</option>
+              </select>
+            </div>
+            <div style="margin-top:8px">
+              <textarea id="supplyAddress" placeholder="כתובת אספקה / תיאור" rows="2"></textarea>
+            </div>
+            <div style="margin-top:8px">
+              <input id="productSearch" placeholder="הזן מוצר/מק" />
+              <div class="items-list" id="pickedItems"></div>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button id="btnAddItem">הוסף פריט מהרשימה</button>
+              <button id="btnSendWA">שתף לוואטסאפ (למחלקה)</button>
+              <button id="btnSaveDraft">שמור טיוטה</button>
+            </div>
+          </div>
+
+          <div id="historyArea" style="display:none;margin-top:12px"></div>
+        </div>
+      </main>
+
+      <aside>
+        <div class="card">
+          <div class="small">מוצרים (חיפוש מהיר)</div>
+          <div id="productSuggestions" style="margin-top:8px;max-height:360px;overflow:auto"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div class="small">מניפת צבעים</div>
+          <div id="colorsList" style="max-height:200px;overflow:auto;margin-top:8px"></div>
+        </div>
+      </aside>
+    </div>
+
+    <nav class="nav footer-nav">
+      <button id="navHome">ראשי</button>
+      <button id="navContainers">מכולה</button>
+      <button id="navCrane">הזמנת מנוף</button>
+      <button id="navManual">פריקה ידנית</button>
+    </nav>
+  </div>
+
+  <script>
+    // CONFIG
+    const WEBAPP_URL = 'REPLACE_WITH_YOUR_WEBAPP_URL'; // יש להחליף ב-Deploy URL של Apps Script
+    const WHATSAPP_DEPT = '972508860896';
+
+    // Simple state
+    let currentClient = null;
+    let pickedItems = [];
+
+    document.getElementById('btnLogin').addEventListener('click', async ()=>{
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      if(!user||!pass){alert('אנא הזן שם משתמש וסיסמה');return}
+      const res = await api('login',{user,pass});
+      if(res && res.success){
+        currentClient = res.client;
+        showClient();
+      } else alert('כניסה נכשלה');
+    });
+
+    document.getElementById('btnNewOrder').addEventListener('click', ()=>{
+      document.getElementById('orderForm').style.display='block';
+      document.getElementById('historyArea').style.display='none';
+    });
+
+    document.getElementById('btnAddItem').addEventListener('click', async ()=>{
+      const q = document.getElementById('productSearch').value.trim();
+      if(!q) return alert('הזן מוצר');
+      // חפש מוצר
+      const s = await api('searchProducts',{q});
+      if(s && s.length){
+        pickedItems.push(s[0]);
+        renderPicked();
+      } else {
+        // לא זוהה - שמור as-is
+        pickedItems.push({name:q,unknown:true});
+        renderPicked();
+      }
+    });
+
+    document.getElementById('btnSendWA').addEventListener('click', async ()=>{
+      if(!currentClient) return alert('אנא היכנס');
+      const payload = buildOrderPayload();
+      // שמור הזמנה בגליון
+      const created = await api('createOrder',{payload});
+      if(!created || !created.success) return alert('שגיאה בשמירה');
+      // הכנת טקסט מסודר
+      const waText = formatWA(created.order);
+      const waUrl = `https://wa.me/${WHATSAPP_DEPT}?text=${encodeURIComponent(waText)}`;
+      window.open(waUrl,'_blank');
+      alert('נפתח חלון וואטסאפ לשיתוף למחלקה');
+    });
+
+    function buildOrderPayload(){
+      const clientId = currentClient.id;
+      const contactName = document.getElementById('contactName').value || currentClient.name;
+      const contactPhone = document.getElementById('contactPhone').value || currentClient.phone;
+      const actionType = document.getElementById('actionType').value;
+      const branch = document.getElementById('branch').value;
+      const address = document.getElementById('supplyAddress').value;
+      return {clientId,contactName,contactPhone,actionType,branch,address,items:pickedItems,createdAt:new Date().toISOString()}
+    }
+
+    function formatWA(order){
+      const header = `שם לקוח: ${currentClient.name} | לקוח#: ${currentClient.id}\nאיש קשר: ${order.contactName} | טלפון: ${order.contactPhone}\nסניף: ${order.branch} | סוג: ${order.actionType}\nכתובת: ${order.address}\n----\n`;
+      const items = order.items.map(it=>{
+        if(it.unknown) return `*${it.name}* ⚠️ (מוצר לא זוהה)`;
+        return `${it.name} | מק"ט:${it.sku||''} | כמות:${it.qty||1}`;
+      }).join('\n');
+      return header + items;
+    }
+
+    function renderPicked(){
+      const el = document.getElementById('pickedItems'); el.innerHTML='';
+      pickedItems.forEach((it,i)=>{
+        const div = document.createElement('div'); div.style.padding='6px'; div.style.borderBottom='1px solid rgba(255,255,255,0.03)';
+        div.textContent = it.unknown ? it.name+' (מוצר לא זוהה)':''+(it.name||it.title)+' ';
+        el.appendChild(div);
+      });
+    }
+
+    function showClient(){
+      document.getElementById('welcome').textContent = 'שלום, ' + currentClient.name;
+      document.getElementById('clientCard').style.display='block';
+      document.getElementById('clientName').textContent = currentClient.name;
+      document.getElementById('clientPhone').textContent = currentClient.phone;
+      document.getElementById('orderForm').style.display='none';
+      // מילות חיפוש מהירות
+      const actions = ['החלפת מכולה','הצבת מכולה','הובלת מנוף 10 מ' ,'הקפצה דחוף','פריקה ידנית'];
+      const kw = document.getElementById('quickActions'); kw.innerHTML='';
+      actions.forEach(a=>{const b=document.createElement('div');b.className='keyword';b.textContent=a;b.onclick=()=>{document.getElementById('actionType').value=a;document.getElementById('orderForm').style.display='block'};kw.appendChild(b)});
+    }
+
+    async function api(action,data){
+      try{
+        const res = await fetch(WEBAPP_URL+'?action='+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+        return await res.json();
+      }catch(e){console.error(e);alert('שגיאת תקשורת');return null}
+    }
+
+    // Load products/colors on start
+    (async ()=>{
+      const p = await api('listProducts',{});
+      const colors = await api('listColors',{});
+      if(p && p.length){
+        const el = document.getElementById('productSuggestions'); el.innerHTML='';
+        p.slice(0,80).forEach(it=>{const d=document.createElement('div');d.style.padding='6px';d.textContent=`${it.name} | ${it.sku}`;d.onclick=()=>{document.getElementById('productSearch').value=it.name};el.appendChild(d)})
+      }
+      if(colors && colors.length){
+        const elc = document.getElementById('colorsList'); elc.innerHTML='';
+        colors.slice(0,80).forEach(c=>{const d=document.createElement('div');d.style.padding='6px';d.textContent=`${c.brand} - ${c.code} - ${c.name}`;elc.appendChild(d)})
+      }
+    })();
+
+  </script>
+</body>
+</html>
