@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת הזמנות חכמה</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter & Rubik -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background: #f0f2f5;
+        }
+        .container-bg {
+            background-color: #f8fafc;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease-in-out;
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 9999px;
+            font-weight: 500;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn-primary {
+            background-color: #3B82F6;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #D1D5DB;
+            color: #4B5563;
+        }
+        .btn-green {
+            background-color: #10B981;
+            color: white;
+        }
+        .btn-yellow {
+            background-color: #FBBF24;
+            color: white;
+        }
+        .btn-red {
+            background-color: #EF4444;
+            color: white;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #E5E7EB;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #3B82F6;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            z-index: 1000;
+            display: none;
+        }
+        @keyframes fadein {
+            from { top: 0; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+        @keyframes fadeout {
+            from { top: 20px; opacity: 1; }
+            to { top: 0; opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Main Container -->
+    <div id="mainContainer" class="w-full max-w-4xl container-bg card p-6 mt-8">
+
+        <!-- Header with customer details -->
+        <header class="flex items-center justify-between pb-4 mb-6 border-b border-gray-200">
+            <div class="flex items-center space-x-4 space-x-reverse">
+                <div id="userAvatar" class="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-blue-500 text-white">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold" id="customerNameDisplay"></h2>
+                    <p class="text-sm text-gray-500">
+                        ברוכים הבאים למערכת הזמנות ח.סבן
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <i class="fas fa-home text-2xl text-gray-600 cursor-pointer" onclick="showPage('homePage')"></i>
+                <i class="fas fa-chart-line text-2xl text-gray-600 cursor-pointer" onclick="showPage('reportsPage')"></i>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Pages -->
+        <div id="content" class="min-h-[500px]">
+
+            <!-- Home Page -->
+            <div id="homePage" class="page">
+                <div class="flex flex-col md:flex-row md:space-x-4 md:space-x-reverse mb-6">
+                    <button class="flex-1 btn btn-primary mb-4 md:mb-0" onclick="showPage('newOrderPage')">
+                        <i class="fas fa-plus ml-2"></i> הזמנה חדשה
+                    </button>
+                    <button class="flex-1 btn btn-green" onclick="showPage('containerPage')">
+                        <i class="fas fa-truck-container ml-2"></i> בקשת מכולה
+                    </button>
+                    <button class="flex-1 btn btn-yellow mt-4 md:mt-0" onclick="showPage('catalogPage')">
+                        <i class="fas fa-boxes ml-2"></i> קטלוג חומרי בניין
+                    </button>
+                </div>
+
+                <div class="text-center text-gray-500">
+                    <p class="text-lg">בחר פעולה כדי להתחיל</p>
+                </div>
+            </div>
+
+            <!-- New Order Page -->
+            <div id="newOrderPage" class="page hidden">
+                <h3 class="text-2xl font-bold mb-4">הזמנה חדשה</h3>
+                <form id="newOrderForm" class="space-y-4">
+                    <div>
+                        <label for="addressSelect" class="block font-semibold mb-2">כתובת אתר</label>
+                        <select id="addressSelect" class="form-input">
+                            <option value="">בחר כתובת קיימת או הזן חדשה</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="newAddressInput" class="block font-semibold mb-2">כתובת חדשה (אם אין ברשימה)</label>
+                        <input type="text" id="newAddressInput" class="form-input" placeholder="הזן כתובת חדשה כאן">
+                    </div>
+                    <div>
+                        <label for="orderTextarea" class="block font-semibold mb-2">הזמנה חופשית</label>
+                        <textarea id="orderTextarea" class="form-input h-32" placeholder="דוגמה: 200 בלוקים לבנים, 5 שקי מלט"></textarea>
+                    </div>
+                    <button type="submit" class="w-full btn btn-primary">
+                        <i class="fas fa-share-square ml-2"></i> שלח הזמנה בווטסאפ
+                    </button>
+                    <button type="button" class="w-full btn btn-secondary mt-2" onclick="addExampleOrder()">
+                        <i class="fas fa-list-ul ml-2"></i> הוסף הזמנת דוגמה לגיליון
+                    </button>
+                </form>
+            </div>
+
+            <!-- Container Page -->
+            <div id="containerPage" class="page hidden">
+                <h3 class="text-2xl font-bold mb-4">בקשת מכולה</h3>
+                <div id="containerData" class="space-y-4">
+                    <p class="text-center text-gray-500">טוען נתוני מכולות...</p>
+                </div>
+                <button class="w-full btn btn-primary mt-4" onclick="showContainerForm()">
+                    <i class="fas fa-plus ml-2"></i> הזמנת מכולה חדשה
+                </button>
+                <form id="newContainerForm" class="hidden mt-4 space-y-4">
+                    <h4 class="text-xl font-bold">הזמנה חדשה</h4>
+                    <div>
+                        <label for="containerType" class="block font-semibold mb-2">סוג פעולה</label>
+                        <select id="containerType" class="form-input">
+                            <option value="הורדה">הורדה</option>
+                            <option value="החלפה">החלפה</option>
+                            <option value="העלאה">העלאה</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="containerNotes" class="block font-semibold mb-2">הערות</label>
+                        <textarea id="containerNotes" class="form-input" placeholder="הערות נוספות"></textarea>
+                    </div>
+                    <button type="submit" class="w-full btn btn-green">
+                        <i class="fas fa-share-square ml-2"></i> שלח בקשה
+                    </button>
+                </form>
+            </div>
+
+            <!-- Reports Page -->
+            <div id="reportsPage" class="page hidden">
+                <h3 class="text-2xl font-bold mb-4">דוחות והיסטוריה</h3>
+                <div id="reportsContent" class="space-y-4">
+                    <div class="card p-4">
+                        <h4 class="font-bold">סיכום הזמנות</h4>
+                        <div id="summaryData">...</div>
+                    </div>
+                    <div class="card p-4">
+                        <h4 class="font-bold">היסטוריית הזמנות</h4>
+                        <div id="historyTable" class="overflow-x-auto">
+                            <!-- Table will be injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Catalog Page -->
+            <div id="catalogPage" class="page hidden">
+                <h3 class="text-2xl font-bold mb-4">קטלוג חומרי בניין</h3>
+                <div id="catalogItems" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Catalog items will be injected here -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymFIE4MJ-A4KxnhMb_dRZsJ0sYvYuAKJ0zeIJxjwH0rz5KjMLG0Exl20-XMiQMBFGR/exec'; // URL provided by the user
+        let customersData = {
+            '972508860896': {
+                name: 'חיים עמרם',
+                avatar: 'H',
+                lastLogin: '2023-11-20T10:00:00Z',
+                addresses: ['האגדה 15 רמת גן'],
+                orders: [{
+                    id: '1',
+                    project: 'פרויקט אגדה',
+                    date: '2023-10-15',
+                    products: 'מלט, בלוקים',
+                    status: 'נשלח'
+                }]
+            },
+            '972501234567': {
+                name: 'אבי לוי',
+                avatar: 'A',
+                lastLogin: '2023-11-21T09:30:00Z',
+                addresses: ['הירדן 5 ירושלים'],
+                orders: [{
+                    id: '2',
+                    project: 'פרויקט ירושלים',
+                    date: '2023-10-16',
+                    products: 'חול, בטון',
+                    status: 'בהכנה'
+                }]
+            }
+        };
+
+        const currentPhone = '972508860896';
+        const currentCustomer = customersData[currentPhone];
+
+        // --- Helper Functions ---
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+            document.getElementById(pageId).style.display = 'block';
+            if (pageId === 'containerPage') {
+                loadContainerData();
+            } else if (pageId === 'catalogPage') {
+                loadCatalog();
+            }
+        }
+
+        // --- Google Apps Script Communication Logic ---
+        async function fetchGoogleScript(action, params = {}) {
+            const url = new URL(SCRIPT_URL);
+            url.searchParams.append('action', action);
+            for (const key in params) {
+                if (params.hasOwnProperty(key)) {
+                    url.searchParams.append(key, params[key]);
+                }
+            }
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                showToast('שגיאה בתקשורת עם השרת.');
+                return { success: false, error: 'Network error or server unreachable.' };
+            }
+        }
+
+        // --- UI Initialization and Logic ---
+        function initializeUI() {
+            // Set user data
+            document.getElementById('customerNameDisplay').textContent = `שלום, ${currentCustomer.name}`;
+            document.getElementById('userAvatar').textContent = currentCustomer.avatar;
+
+            // Show login toast
+            const lastLogin = new Date(currentCustomer.lastLogin);
+            const now = new Date();
+            const timeSinceLastLogin = Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24));
+            showToast(`כניסה אחרונה לפני ${timeSinceLastLogin} ימים.`);
+
+            // Populate address dropdown
+            const addressSelect = document.getElementById('addressSelect');
+            currentCustomer.addresses.forEach(address => {
+                const option = document.createElement('option');
+                option.value = address;
+                option.textContent = address;
+                addressSelect.appendChild(option);
+            });
+            showPage('homePage');
+        }
+
+        // --- Page-specific logic ---
+
+        // New Order Page Logic
+        document.getElementById('newOrderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const address = document.getElementById('addressSelect').value || document.getElementById('newAddressInput').value;
+            const orderText = document.getElementById('orderTextarea').value;
+            if (!address || !orderText) {
+                showToast('יש למלא כתובת והזמנה.');
+                return;
+            }
+
+            const message = `*הזמנה חדשה מ-${currentCustomer.name}*\n\n` +
+                          `*כתובת*: ${address}\n\n` +
+                          `*פרטי הזמנה*:\n` + orderText;
+
+            const whatsappUrl = `https://wa.me/972508860896?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+
+        async function addExampleOrder() {
+            const params = {
+                customerName: 'דוגמה - שמשון',
+                productName: '200 בלוקים',
+                quantity: 200,
+                date: new Date().toLocaleDateString('he-IL')
+            };
+            const response = await fetchGoogleScript('addOrder', params);
+            if (response.success) {
+                showToast('הזמנת דוגמה נשלחה בהצלחה לגיליון!');
+            } else {
+                showToast('שגיאה בשליחת ההזמנה.');
+            }
+        }
+
+        // Container Page Logic
+        async function loadContainerData() {
+            const containerContent = document.getElementById('containerData');
+            containerContent.innerHTML = '<p class="text-center text-gray-500">טוען נתוני מכולות...</p>';
+
+            const data = await fetchGoogleScript('getSheetData', { sheetName: 'מכולות' });
+            
+            if (data && data.data) {
+                const containerTable = document.createElement('table');
+                containerTable.className = 'w-full text-sm border-collapse';
+                containerTable.innerHTML = `
+                    <thead>
+                        <tr class="bg-blue-600 text-white">
+                            <th class="p-2 border-r">טלפון לקוח</th>
+                            <th class="p-2 border-r">מספר מכולה</th>
+                            <th class="p-2 border-r">ימים שעברו</th>
+                            <th class="p-2">פעולות</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.data.map(row => {
+                            const daysPassed = row['ימים שעברו'];
+                            const isOverdue = daysPassed > 10;
+                            return `
+                                <tr class="${isOverdue ? 'bg-red-100' : 'bg-white'} border-b">
+                                    <td class="p-2 border-r">${row['טלפון לקוח']}</td>
+                                    <td class="p-2 border-r">${row['מספר מכולה ירדה']}</td>
+                                    <td class="p-2 border-r">${daysPassed}</td>
+                                    <td class="p-2">
+                                        <button onclick="showContainerForm(${row['מספר מכולה ירדה']})" class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                                            בצע פעולה
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                `;
+                containerContent.innerHTML = '';
+                containerContent.appendChild(containerTable);
+
+                // Show toast for overdue containers
+                const overdueContainers = data.data.filter(row => row['ימים שעברו'] > 10);
+                if (overdueContainers.length > 0) {
+                    const containerNumbers = overdueContainers.map(c => c['מספר מכולה ירדה']).join(', ');
+                    showToast(`קיים אצלך מכולה חורגת: מס' ${containerNumbers}. רוצה לבצע פעולה?`);
+                }
+            } else {
+                containerContent.innerHTML = '<p class="text-center text-gray-500">אין נתוני מכולות להצגה.</p>';
+            }
+        }
+
+        function showContainerForm(containerId = null) {
+            const form = document.getElementById('newContainerForm');
+            const select = document.getElementById('containerType');
+            form.style.display = 'block';
+            if (containerId) {
+                // Pre-select 'החלפה' for existing containers
+                select.value = 'החלפה';
+            }
+        }
+
+        document.getElementById('newContainerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const action = form.containerType.value;
+            const notes = form.containerNotes.value;
+            const message = `*בקשת מכולה חדשה*\n\n` +
+                            `*פעולה*: ${action}\n` +
+                            `*הערות*: ${notes}\n` +
+                            `*לקוח*: ${currentCustomer.name}\n` +
+                            `*טלפון*: ${currentPhone}`;
+            const whatsappUrl = `https://wa.me/972508860896?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+
+        // Catalog Page Logic
+        async function loadCatalog() {
+            const catalogItems = document.getElementById('catalogItems');
+            catalogItems.innerHTML = '<p class="text-center text-gray-500">טוען קטלוג מוצרים...</p>';
+
+            const data = await fetchGoogleScript('getSheetData', { sheetName: 'קטלוג מוצרים' });
+            
+            if (data && data.data) {
+                catalogItems.innerHTML = data.data.map(item => `
+                    <div class="card p-4 flex flex-col items-center text-center">
+                        <img src="${item.image}" alt="${item.title}" class="w-24 h-24 object-cover rounded-full mb-2">
+                        <h4 class="font-bold text-lg">${item.title}</h4>
+                        <p class="text-sm text-gray-600">${item.price}</p>
+                        <p class="text-xs text-gray-500 mt-1">${item.description}</p>
+                        <p class="text-xs text-gray-400 mt-1">מק"ט: ${item['מק"ט']}</p>
+                    </div>
+                `).join('');
+            } else {
+                catalogItems.innerHTML = '<p class="text-center text-gray-500">אין מוצרים בקטלוג.</p>';
+            }
+        }
+
+        // --- Main App Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeUI();
+            showPage('homePage');
+        });
+    </script>
+</body>
+</html>
