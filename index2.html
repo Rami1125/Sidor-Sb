@@ -20,7 +20,6 @@
             overflow: hidden;
         }
 
-        /* סגנונות מיוחדים המדמים את אפליקציית האייפון */
         .iphone-container {
             max-width: 450px;
             margin: auto;
@@ -64,7 +63,6 @@
             appearance: none;
         }
 
-        /* סגנונות חדשים למסך הכניסה והמעבר */
         .login-page {
             position: absolute;
             top: 0;
@@ -129,6 +127,114 @@
             70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(52, 199, 89, 0); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
         }
+
+        @keyframes glowing {
+            0% { box-shadow: 0 0 5px #007aff, 0 0 10px #007aff, 0 0 15px #007aff; }
+            50% { box-shadow: 0 0 20px #007aff, 0 0 30px #007aff, 0 0 40px #007aff; }
+            100% { box-shadow: 0 0 5px #007aff, 0 0 10px #007aff, 0 0 15px #007aff; }
+        }
+
+        .glowing-button {
+            animation: glowing 1.5s infinite alternate;
+        }
+
+        /* סגנון חלון קופץ (modal) */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: #fff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 30;
+        }
+
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .popup-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .popup-content {
+            background-color: white;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            width: 90%;
+            max-width: 450px;
+            transform: translateY(20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .popup-modal.show .popup-content {
+            transform: translateY(0);
+        }
+        
+        .product-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        .product-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
@@ -144,7 +250,7 @@
             <div class="w-full max-w-xs p-4 bg-white rounded-xl shadow-lg">
                 <div class="mb-4">
                     <label for="phone-input" class="block text-xs font-semibold text-gray-700 mb-1">מספר טלפון (לדוגמה: 972508860896)</label>
-                    <input type="text" id="phone-input" class="w-full p-2 text-center rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="מספר טלפון">
+                    <input type="text" id="phone-input" class="w-full p-2 text-center rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="מספר טלפון" value="972508860896">
                 </div>
                 <div class="mb-6">
                     <label for="password-input" class="block text-xs font-semibold text-gray-700 mb-1">סיסמה (ברירת מחדל: סבן)</label>
@@ -176,19 +282,12 @@
                     </div>
                 </div>
 
-                <!-- כותרת מיוחדת -->
-                <div class="mt-4 flex items-center justify-center space-x-2">
-                    <img src="https://placehold.co/32x32/00c7be/white?text=לוגו" alt="Logo" class="w-8 h-8 rounded-full">
-                    <h1 class="text-lg font-bold text-gray-800">הזמנה חדשה מ-ח.סבן</h1>
-                </div>
-
                 <div class="flex items-center justify-between mt-4">
                     <div class="flex items-center space-x-1" dir="ltr">
                         <i class="fa-solid fa-signal text-sm text-gray-500"></i>
                         <i class="fa-solid fa-wifi text-sm text-gray-500"></i>
                         <i class="fa-solid fa-battery-full text-sm text-green-500"></i>
                     </div>
-                    <!-- כפתור שינוי שפה -->
                     <button id="lang-btn" class="text-blue-500 text-sm font-medium">עברית</button>
                 </div>
             </header>
@@ -202,15 +301,64 @@
                 
                 <!-- דף בית -->
                 <div id="home-page" class="page active" style="display: block;">
-                    <div class="glass-card p-4 rounded-xl shadow-lg mb-6 bg-gradient-to-br from-white/80 to-white/40">
+                    <div class="glass-card p-4 rounded-xl shadow-lg mb-6 flex flex-col items-center bg-gradient-to-br from-white/80 to-white/40">
+                        <img src="https://placehold.co/32x32/00c7be/white?text=לוגו" alt="Logo" class="w-8 h-8 rounded-full mb-2">
+                        <h1 class="text-lg font-bold text-gray-800 mb-2">הזמנה חדשה מ-ח.סבן</h1>
                         <h2 class="text-xl font-bold mb-2 text-center text-gray-800">ברוכים הבאים למערכת</h2>
                         <p class="text-sm text-gray-600 text-center">השתמשו בכרטיסיות למטה כדי לנווט.</p>
                     </div>
-                    
-                    <div class="p-4 rounded-xl shadow-lg bg-white mb-6 bg-gradient-to-br from-gray-100/80 to-white/60">
+
+                    <div class="flex flex-col items-center justify-center space-y-4">
+                        <button id="new-order-btn" class="glowing-button w-full max-w-xs bg-blue-500 text-white font-bold py-5 rounded-3xl shadow-lg hover:bg-blue-600 transition-colors duration-300">
+                            הזמנה חדשה
+                        </button>
+                        <button id="whatsapp-share-btn" class="w-full max-w-xs bg-green-500 text-white font-bold py-5 rounded-3xl shadow-lg hover:bg-green-600 transition-colors duration-300 flex items-center justify-center space-x-2">
+                            <i class="fab fa-whatsapp text-2xl"></i>
+                            <span>שיתוף מהיר</span>
+                        </button>
+                    </div>
+
+                    <div class="p-4 rounded-xl shadow-lg bg-white mt-6 mb-6 bg-gradient-to-br from-gray-100/80 to-white/60">
                         <h2 class="text-lg font-semibold mb-4">מידע על המערכת</h2>
                         <p class="text-sm text-gray-600 mb-2">מספר משתמש (User ID): <span id="userIdDisplay" class="font-mono text-xs p-1 bg-gray-200 rounded-md select-all">...</span></p>
                         <p class="text-sm text-gray-600">האפליקציה משתמשת ב-Firestore כדי לשמור ולסנכרן נתונים בזמן אמת.</p>
+                    </div>
+                </div>
+
+                <!-- דף הזמנה חדשה -->
+                <div id="order-page" class="page" style="display: none;">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">הזמנה חדשה</h2>
+                    <div class="glass-card p-4 rounded-xl shadow-lg bg-gradient-to-br from-white/80 to-white/40">
+                        <div class="mb-4">
+                            <label for="address-select" class="block text-sm font-medium text-gray-700">בחר כתובת קיימת</label>
+                            <select id="address-select" class="mt-1 block w-full px-3 py-2 bg-white/70 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="" disabled selected>בחר כתובת...</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label for="new-address-input" class="block text-sm font-medium text-gray-700">או הזן כתובת חדשה / כותרת פרויקט</label>
+                            <input type="text" id="new-address-input" class="mt-1 block w-full px-3 py-2 bg-white/70 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="mb-4">
+                            <label for="free-text-order" class="block text-sm font-medium text-gray-700">הזמנה בטקסט חופשי</label>
+                            <textarea id="free-text-order" rows="4" class="mt-1 block w-full px-3 py-2 bg-white/70 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="רשום פריטים וכמות, לדוגמה: 10 שקיות מלט, 5 ברזלים 10 מ"מ"></textarea>
+                        </div>
+                        <button id="send-order-btn" class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition duration-300 ease-in-out">
+                            הזמן עכשיו
+                        </button>
+                        <div id="order-status-message" class="mt-4 text-center text-sm font-medium" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <!-- דף חומרי בניין (חנות דיגיטלית) -->
+                <div id="catalog-page" class="page" style="display: none;">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">חנות חומרי בניין</h2>
+                    <div id="catalog-content" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Products will be rendered here -->
+                        <div id="catalog-loading" class="col-span-1 md:col-span-2 text-center py-8 text-gray-500">
+                            <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                            <span>טוען קטלוג מוצרים...</span>
+                        </div>
                     </div>
                 </div>
 
@@ -231,25 +379,72 @@
                         </table>
                     </div>
                 </div>
-                
-                <!-- דף הוספה -->
-                <div id="add-page" class="page" style="display: none;">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">הוסף פריט</h2>
-                    <div class="glass-card p-4 rounded-xl shadow-lg bg-gradient-to-br from-white/80 to-white/40">
-                        <div class="mb-4">
-                            <label for="item-name" class="block text-sm font-medium text-gray-700">שם הפריט</label>
-                            <input type="text" id="item-name" class="mt-1 block w-full px-3 py-2 bg-white/70 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+
+                <!-- דף דוחות -->
+                <div id="reports-page" class="page" style="display: none;">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">דוחות והיסטוריה</h2>
+                    <div class="glass-card p-4 rounded-xl shadow-lg mb-4 bg-gradient-to-br from-white/80 to-white/40">
+                        <h3 class="font-bold text-lg mb-2">סיכום פעילות</h3>
+                        <p class="text-sm text-gray-600 mb-1">מספר הזמנות שבוצעו: <span id="orders-count" class="font-semibold text-gray-800">0</span></p>
+                        <p class="text-sm text-gray-600">הזמנה אחרונה: <span id="last-order-date" class="font-semibold text-gray-800">לא נמצאה</span></p>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-lg overflow-x-auto bg-gradient-to-br from-gray-100/80 to-white/60">
+                        <h3 class="font-bold text-lg mb-2">הזמנות קודמות</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">מספר הזמנה</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">תאריך</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">פעולות</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="order-history-tbody">
+                                    <tr><td colspan="3" class="text-center py-4 text-gray-500">אין היסטוריית הזמנות.</td></tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="mb-4">
-                            <label for="item-quantity" class="block text-sm font-medium text-gray-700">כמות</label>
-                            <input type="number" id="item-quantity" class="mt-1 block w-full px-3 py-2 bg-white/70 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                        <button id="add-item-btn" class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition duration-300 ease-in-out">
-                            הוסף פריט
-                        </button>
-                        <div id="status-message" class="mt-4 text-center text-sm font-medium" style="display: none;"></div>
                     </div>
                 </div>
+                
+                <!-- דף מכולות -->
+                <div id="container-page" class="page" style="display: none;">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">בקשת מכולה</h2>
+                    <div class="glass-card p-4 rounded-xl shadow-lg mb-4 bg-gradient-to-br from-white/80 to-white/40">
+                        <h3 class="font-bold text-lg mb-2">פעולות מכולה</h3>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button class="bg-blue-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-300" data-action="drop-off">
+                                הורדה
+                            </button>
+                            <button class="bg-blue-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-300" data-action="swap">
+                                החלפה
+                            </button>
+                            <button class="bg-blue-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-300" data-action="pick-up">
+                                העלאה
+                            </button>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg mb-2">מכולות פעילות</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">מס' מכולה</th>
+                                            <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ימים בשכירות</th>
+                                            <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">סטטוס</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="active-containers-tbody">
+                                        <tr><td colspan="3" class="text-center py-4 text-gray-500">טוען נתונים...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </main>
 
             <!-- סרגל ניווט תחתון (Tab Bar) -->
@@ -258,34 +453,106 @@
                     <i class="fas fa-home text-lg nav-icon"></i>
                     <span class="text-xs nav-label mt-1">בית</span>
                 </a>
-                <a href="#" class="nav-item flex flex-col items-center text-gray-500 p-2 rounded-lg" data-page="data-page">
-                    <i class="fas fa-database text-lg nav-icon"></i>
-                    <span class="text-xs nav-label mt-1">נתונים</span>
+                <a href="#" class="nav-item flex flex-col items-center text-gray-500 p-2 rounded-lg" data-page="container-page">
+                    <i class="fas fa-box-full text-lg nav-icon"></i>
+                    <span class="text-xs nav-label mt-1">מכולה</span>
                 </a>
-                <a href="#" class="nav-item flex flex-col items-center text-gray-500 p-2 rounded-lg" data-page="add-page">
-                    <i class="fas fa-plus-circle text-lg nav-icon"></i>
-                    <span class="text-xs nav-label mt-1">הוספה</span>
+                <a href="#" class="nav-item flex flex-col items-center text-gray-500 p-2 rounded-lg" data-page="catalog-page">
+                    <i class="fas fa-hammer text-lg nav-icon"></i>
+                    <span class="text-xs nav-label mt-1">חומרי בניין</span>
+                </a>
+                <a href="#" class="nav-item flex flex-col items-center text-gray-500 p-2 rounded-lg" data-page="reports-page">
+                    <i class="fas fa-chart-line text-lg nav-icon"></i>
+                    <span class="text-xs nav-label mt-1">דוחות</span>
                 </a>
             </nav>
         </div>
     </div>
+    
+    <!-- חלון קופץ - הודעות דינמיות -->
+    <div id="dynamic-popup" class="popup-modal">
+        <div class="popup-content">
+            <div id="popup-icon" class="text-4xl mb-4"></div>
+            <h3 id="popup-title" class="font-bold text-lg mb-2"></h3>
+            <p id="popup-message" class="text-sm text-gray-600"></p>
+            <div id="popup-actions" class="mt-4 space-x-2" dir="ltr"></div>
+        </div>
+    </div>
+    
+    <!-- Toast Message -->
+    <div id="toast-message" class="toast"></div>
+
+    <!-- חלון קופץ לבקשת מכולה -->
+    <div id="container-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="font-bold text-lg mb-2" id="modal-title"></h3>
+            <div id="modal-body">
+                <div class="mb-4">
+                    <label for="modal-address-select" class="block text-sm font-medium text-gray-700">בחר כתובת</label>
+                    <select id="modal-address-select" class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="" disabled selected>טוען כתובות...</option>
+                    </select>
+                </div>
+                <div class="mb-4" id="container-select-container">
+                    <label for="modal-container-select" class="block text-sm font-medium text-gray-700">בחר מכולה</label>
+                    <select id="modal-container-select" class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="" disabled selected>בחר מכולה...</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="modal-comments" class="block text-sm font-medium text-gray-700">הערות</label>
+                    <textarea id="modal-comments" rows="3" class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                </div>
+                <button id="modal-send-btn" class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition duration-300 ease-in-out">
+                    שלח בקשה
+                </button>
+            </div>
+            <button id="modal-close-btn" class="absolute top-2 left-2 text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
 
     <!-- Firebase SDK Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // הגדרת משתנים גלובליים
+        // Global variables
         let app, db, auth;
         let userId;
-
-        // הגדרת Firebase על ידי משתנים גלובליים
+        let customerData;
+        
+        // This object simulates a simple customer database. In a real application, you would use a more secure method.
+        const customers = {
+            '972508860896': { name: 'חיים עמרם', savedAddresses: ['האגדה 15, רמת גן'], contactName: 'חיים' },
+            '972521234567': { name: 'שרה לוי', savedAddresses: ['שד\\\' ירושלים 10, תל אביב', 'רח\' הגיבורים 5, ירושלים'], contactName: 'שרי' }
+        };
+        
+        // Custom messages
+        const messages = {
+            welcome: (name) => ({ icon: '🎉', title: `ברוך הבא, ${name}!`, message: `שמחים לראות אותך שוב במערכת.` }),
+            lastLogin: (date) => ({ icon: '⏰', title: `כניסה אחרונה`, message: `נכנסת לאחרונה בתאריך: ${date}` }),
+            positive: (name) => ({ icon: '👍', title: 'כל הכבוד!', message: `נראה שיש התקדמות בפרויקט, ${name}!` }),
+            progress: (title) => ({ icon: '👷', title: 'הזמנה בביצוע', message: `הזמנתך לפרויקט "${title}" בטיפול.` }),
+            containerReminder: (containerNum, address, days) => ({ icon: '⚠️', title: 'תזכורת חשובה', message: `קיימת אצלך מכולה מספר "${containerNum}" בכתובת "${address}" כבר ${days} ימים! תרצה לבצע פעולה במכולה זו?`, actions: [{ label: 'כן', type: 'yes' }, { label: 'לא', type: 'no' }] })
+        };
+        
+        // Firebase config
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // Google Sheets API URLs
+        const CATALOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzdkvb4wOMILaPIq-oalk6IRA7UKxCfcsRYW0VPjF5LHO3qYLewgicT8Ua6GCdQnTn/exec';
+        const CONTAINER_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
 
-        // אלמנטים מה-DOM
+        // Gemini API config
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=`;
+
+        // DOM elements
         const loginPage = document.getElementById('login-page');
         const mainApp = document.getElementById('main-app');
         const phoneInput = document.getElementById('phone-input');
@@ -296,28 +563,98 @@
         const liveDateElement = document.getElementById('live-date');
         const customerNameElement = document.getElementById('customer-name');
         const avatarImgElement = document.getElementById('avatar-img');
+        const newOrderBtn = document.getElementById('new-order-btn');
+        const whatsappShareBtn = document.getElementById('whatsapp-share-btn');
+        const addressSelect = document.getElementById('address-select');
+        const newAddressInput = document.getElementById('new-address-input');
+        const freeTextOrderInput = document.getElementById('free-text-order');
+        const sendOrderBtn = document.getElementById('send-order-btn');
+        const orderStatusMessage = document.getElementById('order-status-message');
+        const orderHistoryTbody = document.getElementById('order-history-tbody');
+        const ordersCountElement = document.getElementById('orders-count');
+        const lastOrderDateElement = document.getElementById('last-order-date');
+        const containerModal = document.getElementById('container-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const modalAddressSelect = document.getElementById('modal-address-select');
+        const modalContainerSelect = document.getElementById('modal-container-select');
+        const modalSendBtn = document.getElementById('modal-send-btn');
+        const modalComments = document.getElementById('modal-comments');
+        const containerActionButtons = document.querySelectorAll('#container-page button[data-action]');
+        const activeContainersTbody = document.getElementById('active-containers-tbody');
         const langBtn = document.getElementById('lang-btn');
-        
         const loadingSpinner = document.getElementById('loading-spinner');
-        const dataTbody = document.getElementById('data-tbody');
-        const userIdDisplay = document.getElementById('userIdDisplay');
-        const itemNameInput = document.getElementById('item-name');
-        const itemQuantityInput = document.getElementById('item-quantity');
-        const addItemBtn = document.getElementById('add-item-btn');
-        const statusMessage = document.getElementById('status-message');
+        const dynamicPopup = document.getElementById('dynamic-popup');
+        const toastMessage = document.getElementById('toast-message');
+        const catalogContent = document.getElementById('catalog-content');
+        const catalogLoading = document.getElementById('catalog-loading');
 
-        // פונקציה לשינוי דפים
+        // Function to show a dynamic popup
+        function showPopup(popupData, onAction) {
+            const { icon, title, message, actions } = popupData;
+            document.getElementById('popup-icon').textContent = icon;
+            document.getElementById('popup-title').textContent = title;
+            document.getElementById('popup-message').textContent = message;
+            
+            const popupActions = document.getElementById('popup-actions');
+            popupActions.innerHTML = '';
+            
+            if (actions) {
+                actions.forEach(action => {
+                    const button = document.createElement('button');
+                    button.textContent = action.label;
+                    button.className = 'px-4 py-2 rounded-lg font-bold text-white transition-colors duration-300';
+                    if (action.type === 'yes') {
+                        button.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                    } else if (action.type === 'no') {
+                         button.classList.add('bg-gray-400', 'hover:bg-gray-500');
+                    }
+                    button.onclick = () => {
+                        dynamicPopup.classList.remove('show');
+                        if (onAction) {
+                             onAction(action.type);
+                        }
+                    };
+                    popupActions.appendChild(button);
+                });
+            } else {
+                const closeButton = document.createElement('button');
+                closeButton.textContent = 'סגור';
+                closeButton.className = 'px-4 py-2 bg-gray-400 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors duration-300';
+                closeButton.onclick = () => { dynamicPopup.classList.remove('show'); };
+                popupActions.appendChild(closeButton);
+            }
+            
+            dynamicPopup.classList.add('show');
+        }
+
+        // Function to show a short toast message
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toastMessage.classList.add('show');
+            setTimeout(() => {
+                toastMessage.classList.remove('show');
+            }, 3000);
+        }
+
+        // Function to switch pages
         function switchPage(pageId) {
             const pages = document.querySelectorAll('.page');
             pages.forEach(page => page.style.display = 'none');
-            document.getElementById(pageId).style.display = 'block';
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.style.display = 'block';
+            }
 
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(item => item.classList.remove('active'));
-            document.querySelector(`.nav-item[data-page="${pageId}"]`).classList.add('active');
+            const activeNavItem = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
         }
 
-        // פונקציה לעדכון השעון והתאריך
+        // Function to update date and time
         function updateDateTime() {
             const now = new Date();
             const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false };
@@ -326,43 +663,55 @@
             liveDateElement.textContent = now.toLocaleDateString('he-IL', dateOptions);
         }
 
-        // פונקציה לטיפול בכניסה
+        // Handle login
         async function handleLogin() {
             const phone = phoneInput.value.trim();
             const password = passwordInput.value.trim();
 
-            // בדיקת פרטי הכניסה (עדיין מבוסס על נתונים ידניים)
-            if (phone === '972508860896' && password === 'סבן') {
+            if (password === 'סבן' && customers[phone]) {
                 loginMessage.style.display = 'none';
-
-                // הדמיית פרטי הלקוח
-                const customerName = 'ח.סבן';
-                const customerAvatar = `https://placehold.co/40x40/00c7be/white?text=${customerName.substring(0, 1)}`;
+                customerData = customers[phone];
                 
-                // עדכון פרטי הלקוח במסך הראשי
-                customerNameElement.textContent = customerName;
-                avatarImgElement.src = customerAvatar;
-
-                // הפעלת האנימציה ומעבר למסך הראשי
+                customerNameElement.textContent = customerData.name;
+                avatarImgElement.src = `https://placehold.co/40x40/00c7be/white?text=${customerData.name.substring(0, 1)}`;
+                
                 loginPage.classList.add('hidden');
                 setTimeout(() => {
                     mainApp.classList.add('visible');
-                    initFirebase(); // מתחיל אתחול Firebase רק לאחר כניסה מוצלחת
-                }, 500); // לאחר חצי שנייה של אנימציה
-
+                    initFirebase();
+                    populateAddressSelects();
+                    showPopup(messages.welcome(customerData.contactName));
+                    showLastLogin();
+                }, 500);
             } else {
                 showLoginMessage('מספר הטלפון או הסיסמה שגויים', 'text-red-500');
             }
         }
 
-        // פונקציה להצגת הודעות במסך הכניסה
+        // Show login message
         function showLoginMessage(message, colorClass) {
             loginMessage.textContent = message;
             loginMessage.className = `text-center text-sm font-medium mt-4 ${colorClass}`;
             loginMessage.style.display = 'block';
         }
         
-        // פונקציה לאתחול Firebase
+        // Show last login message using Firestore
+        async function showLastLogin() {
+            const userRef = doc(db, `/artifacts/${appId}/users/${userId}/data/profile`);
+            try {
+                const docSnap = await getDoc(userRef);
+                const now = new Date();
+                if (docSnap.exists() && docSnap.data().lastLogin) {
+                    const lastLoginDate = docSnap.data().lastLogin;
+                    showToast(messages.lastLogin(lastLoginDate).message);
+                }
+                await setDoc(userRef, { lastLogin: now.toLocaleString('he-IL') });
+            } catch (error) {
+                console.error("Error fetching or setting last login:", error);
+            }
+        }
+
+        // Initialize Firebase
         async function initFirebase() {
             try {
                 loadingSpinner.style.display = 'flex';
@@ -382,6 +731,7 @@
                         userId = user.uid;
                         userIdDisplay.textContent = userId;
                         listenForData();
+                        listenForOrders();
                         loadingSpinner.style.display = 'none';
                     } else {
                         userId = crypto.randomUUID();
@@ -389,21 +739,19 @@
                         loadingSpinner.style.display = 'none';
                     }
                 });
-
-                console.log('Firebase initialized and user authenticated.');
-
             } catch (error) {
                 console.error("Error during Firebase initialization or authentication:", error);
                 loadingSpinner.style.display = 'none';
             }
         }
-
-        // פונקציה להאזנה לנתונים מ-Firestore
+        
+        // Listen for data from Firestore
         function listenForData() {
             const collectionPath = `/artifacts/${appId}/public/data/items`;
             const q = collection(db, collectionPath);
             
             onSnapshot(q, (snapshot) => {
+                const dataTbody = document.getElementById('data-tbody');
                 dataTbody.innerHTML = '';
                 snapshot.forEach((doc) => {
                     const item = doc.data();
@@ -423,76 +771,529 @@
                 console.error("Error listening to data:", error);
             });
         }
-        
-        // פונקציה להוספת פריט חדש
-        async function addNewItem() {
-            const name = itemNameInput.value.trim();
-            const quantity = parseInt(itemQuantityInput.value.trim(), 10);
 
-            if (!name || isNaN(quantity)) {
-                showStatusMessage('יש למלא את כל השדות בצורה תקינה.', 'text-red-500');
+        // Listen for orders from Firestore
+        function listenForOrders() {
+            if (!userId) return;
+            const ordersRef = collection(db, `/artifacts/${appId}/users/${userId}/orders`);
+            onSnapshot(ordersRef, (snapshot) => {
+                orderHistoryTbody.innerHTML = '';
+                const orders = [];
+                snapshot.forEach(doc => {
+                    const order = doc.data();
+                    orders.push({ id: doc.id, ...order });
+                });
+                
+                ordersCountElement.textContent = orders.length;
+                if (orders.length > 0) {
+                    orders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    const lastOrder = orders[0];
+                    lastOrderDateElement.textContent = new Date(lastOrder.timestamp).toLocaleString('he-IL');
+                } else {
+                    lastOrderDateElement.textContent = 'לא נמצאה';
+                }
+
+                if (orders.length === 0) {
+                    orderHistoryTbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">אין היסטוריית הזמנות.</td></tr>`;
+                } else {
+                    orders.forEach(order => {
+                        const row = `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.orderNumber}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(order.timestamp).toLocaleDateString('he-IL')}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <button class="text-blue-500 hover:text-blue-700 font-medium ml-2" data-action="duplicate-order" data-id="${order.id}">שכפל</button>
+                                </td>
+                            </tr>
+                        `;
+                        orderHistoryTbody.insertAdjacentHTML('beforeend', row);
+                    });
+                }
+            }, (error) => {
+                console.error("Error listening to orders:", error);
+            });
+        }
+        
+        // Populate address dropdowns
+        function populateAddressSelects() {
+            if (!customerData) return;
+            const selects = [addressSelect, modalAddressSelect];
+            selects.forEach(select => {
+                select.innerHTML = '<option value="" disabled selected>בחר כתובת...</option>';
+                customerData.savedAddresses.forEach(address => {
+                    const option = `<option value="${address}">${address}</option>`;
+                    select.insertAdjacentHTML('beforeend', option);
+                });
+            });
+        }
+
+        // Add new order
+        async function addNewOrder() {
+            const selectedAddress = addressSelect.value;
+            const newAddress = newAddressInput.value.trim();
+            const orderText = freeTextOrderInput.value.trim();
+
+            if (!selectedAddress && !newAddress) {
+                showStatusMessage('יש לבחור כתובת קיימת או להזין חדשה.', 'text-red-500', orderStatusMessage);
                 return;
             }
 
+            if (!orderText) {
+                showStatusMessage('יש להזין פרטי הזמנה.', 'text-red-500', orderStatusMessage);
+                return;
+            }
+
+            showStatusMessage('מעבד הזמנה...', 'text-blue-500', orderStatusMessage);
+            sendOrderBtn.disabled = true;
+
             try {
-                const newItem = {
-                    name,
-                    quantity,
-                    timestamp: new Date().toISOString()
+                const formattedOrder = await formatOrderFromText(orderText);
+                const orderNumber = `ORD-${Date.now()}`;
+                const finalAddress = selectedAddress || newAddress;
+
+                const newOrder = {
+                    customerName: customerData.name,
+                    customerPhone: phoneInput.value,
+                    address: finalAddress,
+                    orderNumber,
+                    items: formattedOrder.items,
+                    notes: formattedOrder.notes || '',
+                    timestamp: new Date().toISOString(),
+                    whatsappLink: '', 
+                    orderStatus: 'חדשה'
                 };
 
-                const collectionPath = `/artifacts/${appId}/public/data/items`;
-                await addDoc(collection(db, collectionPath), newItem);
+                const ordersRef = collection(db, `/artifacts/${appId}/users/${userId}/orders`);
+                const docRef = await addDoc(ordersRef, newOrder);
 
-                itemNameInput.value = '';
-                itemQuantityInput.value = '';
-                showStatusMessage('הפריט נוסף בהצלחה!', 'text-green-500');
+                const whatsappLink = `${window.location.href}?orderId=${docRef.id}&userId=${userId}`;
+                await updateDoc(doc(ordersRef, docRef.id), { whatsappLink });
+                
+                if (newAddress && !customerData.savedAddresses.includes(newAddress)) {
+                    customerData.savedAddresses.push(newAddress);
+                }
+                
+                showStatusMessage('ההזמנה נשלחה בהצלחה!', 'text-green-500', orderStatusMessage);
+                freeTextOrderInput.value = '';
+                addressSelect.value = '';
+                newAddressInput.value = '';
+
+                const whatsappMessage = formatWhatsAppMessage(newOrder, whatsappLink);
+                window.open(`https://wa.me/972508860896?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
 
             } catch (error) {
-                console.error("Error adding document: ", error);
-                showStatusMessage(`שגיאה בהוספת הפריט: ${error.message}`, 'text-red-500');
+                console.error("Error adding order: ", error);
+                showStatusMessage(`שגיאה בשליחת ההזמנה: ${error.message}`, 'text-red-500', orderStatusMessage);
+            } finally {
+                sendOrderBtn.disabled = false;
             }
         }
 
-        // מציג הודעת סטטוס
-        function showStatusMessage(message, colorClass) {
-            statusMessage.textContent = message;
-            statusMessage.className = `mt-4 text-center text-sm font-medium ${colorClass}`;
-            statusMessage.style.display = 'block';
+        // Format order from free text using Gemini API
+        async function formatOrderFromText(text) {
+            const systemPrompt = `
+                Analyze the following free text for an order.
+                Identify the ordered items and their quantities.
+                If no quantity is specified, assume 1.
+                Extract any additional notes.
+                Output the result as a JSON object with two properties: 'items' (an array of strings, each formatted as "quantity x item") and 'notes' (a single string).
+                Example:
+                Input: "10 שקיות מלט, 5 ברזלים 10 מ"מ"
+                Output: { "items": ["10 שקיות מלט", "5 ברזלים 10 מ\"מ"], "notes": "" }
+            `;
+            const userQuery = text;
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "items": {
+                                "type": "ARRAY",
+                                "items": { "type": "STRING" }
+                            },
+                            "notes": { "type": "STRING" }
+                        },
+                        "propertyOrdering": ["items", "notes"]
+                    }
+                }
+            };
+
+            const apiUrl = `${GEMINI_API_URL}${''}`;
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            const candidate = result.candidates?.[0];
+            if (candidate && candidate.content?.parts?.[0]?.text) {
+                const jsonText = candidate.content.parts[0].text;
+                try {
+                    return JSON.parse(jsonText);
+                } catch (e) {
+                    console.error("Failed to parse JSON response from Gemini API", e);
+                    return { items: [text], notes: "הזמנה לא עובדה אוטומטית" };
+                }
+            }
+            throw new Error("API did not return a valid response.");
+        }
+
+        // Function to format the WhatsApp message
+        function formatWhatsAppMessage(orderData, link) {
+            const lines = [];
+            lines.push(`*הזמנה חדשה - מספר ${orderData.orderNumber}*`);
+            lines.push(`מאת: ${orderData.customerName}`);
+            lines.push(`טלפון: ${orderData.customerPhone}`);
+            lines.push(`כתובת: ${orderData.address}`);
+            lines.push(`\n---`);
+            lines.push(`*פרטי הזמנה:*`);
+            orderData.items.forEach(item => {
+                lines.push(`- ${item}`);
+            });
+            if (orderData.notes) {
+                lines.push(`\n*הערות:* ${orderData.notes}`);
+            }
+            lines.push(`\n*לצפייה בהזמנה ולהדפסה:* ${link}`);
+            return lines.join('\n');
+        }
+
+        // Duplicate order
+        document.addEventListener('click', async (e) => {
+            if (e.target.dataset.action === 'duplicate-order') {
+                const orderId = e.target.dataset.id;
+                try {
+                    const orderDoc = await getDoc(doc(db, `/artifacts/${appId}/users/${userId}/orders`, orderId));
+                    if (orderDoc.exists()) {
+                        const originalOrder = orderDoc.data();
+                        
+                        // Populate form with original data
+                        const addressToSelect = originalOrder.address;
+                        if (customerData.savedAddresses.includes(addressToSelect)) {
+                            addressSelect.value = addressToSelect;
+                            newAddressInput.value = '';
+                        } else {
+                            addressSelect.value = '';
+                            newAddressInput.value = addressToSelect;
+                        }
+
+                        freeTextOrderInput.value = originalOrder.items.join(', ');
+                        
+                        showStatusMessage('הזמנה שוכפלה בהצלחה! ניתן לערוך ולשלוח מחדש.', 'text-green-500', orderStatusMessage);
+                        switchPage('order-page');
+                    } else {
+                        showStatusMessage('ההזמנה המקורית לא נמצאה.', 'text-red-500', orderStatusMessage);
+                    }
+                } catch (error) {
+                    console.error("Error duplicating order:", error);
+                    showStatusMessage(`שגיאה בשכפול הזמנה: ${error.message}`, 'text-red-500', orderStatusMessage);
+                }
+            }
+        });
+
+        // Show status message
+        function showStatusMessage(message, colorClass, element) {
+            if (!element) return;
+            element.textContent = message;
+            element.className = `mt-4 text-center text-sm font-medium ${colorClass}`;
+            element.style.display = 'block';
             setTimeout(() => {
-                statusMessage.style.display = 'none';
-            }, 3000); // נעלם לאחר 3 שניות
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle URL parameters for printing
+        async function handlePrintPage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+            const userIdFromUrl = urlParams.get('userId');
+
+            if (orderId && userIdFromUrl) {
+                try {
+                    const orderDoc = await getDoc(doc(db, `/artifacts/${appId}/users/${userIdFromUrl}/orders`, orderId));
+                    if (orderDoc.exists()) {
+                        const order = orderDoc.data();
+                        const printHTML = `
+                            <html>
+                            <head>
+                                <title>הזמנה מספר ${order.orderNumber}</title>
+                                <style>
+                                    body { font-family: 'Inter', sans-serif; direction: rtl; text-align: right; margin: 40px; }
+                                    .header { text-align: center; margin-bottom: 20px; }
+                                    .header h1 { font-size: 24px; color: #007aff; }
+                                    .details { margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
+                                    .details p { margin: 5px 0; }
+                                    .items-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                                    .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; }
+                                    .items-table th { background-color: #f2f2f2; }
+                                    @media print {
+                                        body { font-size: 14px; }
+                                        .header, .details, .items-table { page-break-inside: avoid; }
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="header">
+                                    <img src="https://placehold.co/60x60/00c7be/white?text=לוגו" alt="Logo" style="border-radius: 50%;">
+                                    <h1>הזמנה חדשה</h1>
+                                    <p>ח.סבן</p>
+                                </div>
+                                <div class="details">
+                                    <p><strong>מספר הזמנה:</strong> ${order.orderNumber}</p>
+                                    <p><strong>שם לקוח:</strong> ${order.customerName}</p>
+                                    <p><strong>טלפון:</strong> ${order.customerPhone}</p>
+                                    <p><strong>כתובת:</strong> ${order.address}</p>
+                                    <p><strong>תאריך הזמנה:</strong> ${new Date(order.timestamp).toLocaleString('he-IL')}</p>
+                                </div>
+                                <h2>פרטי הזמנה</h2>
+                                <table class="items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>פריט</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${order.items.map(item => `<tr><td>${item}</td></tr>`).join('')}
+                                    </tbody>
+                                </table>
+                                <p style="margin-top: 20px;"><strong>הערות:</strong> ${order.notes || 'אין'}</p>
+                            </body>
+                            </html>
+                        `;
+                        const printWindow = window.open('', '_blank');
+                        printWindow.document.write(printHTML);
+                        printWindow.document.close();
+                        printWindow.focus();
+                        setTimeout(() => {
+                            printWindow.print();
+                        }, 500);
+                    } else {
+                        document.body.innerHTML = '<h1>שגיאה: הזמנה לא נמצאה.</h1>';
+                    }
+                } catch (error) {
+                    console.error("Error fetching print data:", error);
+                    document.body.innerHTML = '<h1>שגיאה: אין אפשרות לטעון את דף ההדפסה.</h1>';
+                }
+            }
+        }
+
+        // Listen for container requests
+        async function fetchAndRenderContainers() {
+            if (!customerData) {
+                activeContainersTbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">יש להתחבר כדי לצפות בנתונים.</td></tr>`;
+                return;
+            }
+            activeContainersTbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500"><i class="fas fa-spinner fa-spin"></i> טוען נתוני מכולות...</td></tr>`;
+
+            const googleScriptUrl = `${CONTAINER_SCRIPT_URL}?phone=${encodeURIComponent(phoneInput.value)}&customerName=${encodeURIComponent(customerData.name)}`;
+            
+            try {
+                const response = await fetch(googleScriptUrl);
+                const data = await response.json();
+                
+                activeContainersTbody.innerHTML = '';
+                if (data.status === 'success' && data.data && data.data.length > 0) {
+                    let hasOverdueContainer = false;
+                    let containerToPrompt = null;
+                    data.data.forEach(container => {
+                        const containerNum = container['מספר מכולה ירדה'] || container['מספר מכולה עלתה'];
+                        const rentalDays = parseInt(container['ימים שעברו'] || container['ימים שעברו (עלתה)']);
+                        const status = container['סטטוס'];
+
+                        const row = `
+                            <tr>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">${containerNum}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${rentalDays}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${status}</td>
+                            </tr>
+                        `;
+                        activeContainersTbody.insertAdjacentHTML('beforeend', row);
+                        
+                        if (rentalDays > 10 && status === 'פעילה' && !hasOverdueContainer) {
+                            hasOverdueContainer = true;
+                            containerToPrompt = container;
+                        }
+                    });
+
+                    if (hasOverdueContainer) {
+                        const containerNum = containerToPrompt['מספר מכולה ירדה'] || containerToPrompt['מספר מכולה עלתה'];
+                        const rentalDays = parseInt(containerToPrompt['ימים שעברו'] || containerToPrompt['ימים שעברו (עלתה)']);
+                        const address = containerToPrompt['כתובת ירידה'];
+                        
+                        showPopup(messages.containerReminder(containerNum, address, rentalDays), (action) => {
+                            if (action === 'yes') {
+                                openContainerModal({ containerNumber: containerNum, address, action: 'swap' }); // Open with a suggested action
+                            }
+                        });
+                    }
+                } else {
+                    activeContainersTbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">לא נמצאו מכולות פעילות.</td></tr>`;
+                }
+            } catch (error) {
+                console.error("Error fetching container data:", error);
+                activeContainersTbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-500">שגיאה בטעינת נתוני מכולות.</td></tr>`;
+            }
+        }
+
+        // Fetch and render catalog
+        async function fetchAndRenderCatalog() {
+            catalogLoading.style.display = 'block';
+            catalogContent.innerHTML = '';
+            
+            try {
+                const response = await fetch(CATALOG_SCRIPT_URL);
+                const products = await response.json();
+
+                if (products.status === 'success' && products.data.length > 0) {
+                    catalogLoading.style.display = 'none';
+                    products.data.forEach(product => {
+                        const productCard = `
+                            <div class="product-card p-4">
+                                <img src="${product.image || 'https://placehold.co/400x200/cccccc/333333?text=אין+תמונה'}" alt="${product['שם מוצר']}" class="rounded-lg mb-4">
+                                <h3 class="font-bold text-lg mb-1">${product['שם מוצר']}</h3>
+                                <p class="text-gray-600 text-sm mb-2">${product.description || 'אין תיאור'}</p>
+                                <div class="flex items-center justify-between text-gray-800">
+                                    <span class="font-bold text-lg">${product.price || 'מחיר לא זמין'} ₪</span>
+                                    <span class="text-xs text-gray-500">מק"ט: ${product['מק"ט מוצר']}</span>
+                                </div>
+                            </div>
+                        `;
+                        catalogContent.insertAdjacentHTML('beforeend', productCard);
+                    });
+                } else {
+                    catalogLoading.textContent = 'לא נמצאו מוצרים בקטלוג.';
+                }
+            } catch (error) {
+                console.error("Error fetching catalog:", error);
+                catalogLoading.textContent = 'שגיאה בטעינת הקטלוג.';
+            }
         }
         
-        // מאזין לאירועים של כפתורי הניווט
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const pageId = e.currentTarget.getAttribute('data-page');
-                switchPage(pageId);
+        // Open container modal with pre-filled data
+        function openContainerModal(data = {}) {
+            const { action, containerNumber, address } = data;
+            
+            modalTitle.textContent = `בקשת ${action === 'drop-off' ? 'הורדה' : action === 'swap' ? 'החלפה' : 'העלאה'}`;
+            modalComments.value = '';
+            
+            if (address) {
+                modalAddressSelect.value = address;
+            }
+            if (containerNumber) {
+                // Populate container select with the number and disable it
+                modalContainerSelect.innerHTML = `<option value="${containerNumber}" selected>${containerNumber}</option>`;
+                modalContainerSelect.disabled = true;
+            } else {
+                modalContainerSelect.innerHTML = `<option value="" disabled selected>בחר מכולה...</option>`;
+                modalContainerSelect.disabled = false;
+            }
+            
+            if (action === 'drop-off') {
+                document.getElementById('container-select-container').style.display = 'none';
+            } else {
+                document.getElementById('container-select-container').style.display = 'block';
+            }
+            containerModal.classList.add('open');
+        }
+
+        // Send container request
+        async function sendContainerRequest() {
+            const selectedAction = modalTitle.textContent.replace('בקשת ', '');
+            const selectedAddress = modalAddressSelect.value;
+            const containerNum = modalContainerSelect.value;
+            const comments = modalComments.value;
+            
+            if (!selectedAddress || (selectedAction !== 'הורדה' && !containerNum)) {
+                showToast('יש למלא את כל השדות הנדרשים.');
+                return;
+            }
+
+            const requestData = {
+                action: selectedAction,
+                address: selectedAddress,
+                container: containerNum,
+                comments: comments,
+                customerName: customerData.name,
+                customerPhone: phoneInput.value
+            };
+            
+            const whatsappMessage = formatContainerWhatsAppMessage(requestData);
+            window.open(`https://wa.me/972508860896?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
+            containerModal.classList.remove('open');
+            showToast('בקשתך נשלחה בהצלחה!');
+        }
+
+        // Format WhatsApp message for container request
+        function formatContainerWhatsAppMessage(request) {
+            const lines = [];
+            lines.push(`*בקשת מכולה - ${request.action}*`);
+            lines.push(`מאת: ${request.customerName}`);
+            lines.push(`טלפון: ${request.customerPhone}`);
+            lines.push(`כתובת: ${request.address}`);
+            if (request.container) {
+                lines.push(`מספר מכולה: ${request.container}`);
+            }
+            if (request.comments) {
+                lines.push(`הערות: ${request.comments}`);
+            }
+            return lines.join('\n');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            handlePrintPage();
+
+            // Main app listeners
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = e.currentTarget.getAttribute('data-page');
+                    switchPage(pageId);
+                    if (pageId === 'container-page') {
+                        fetchAndRenderContainers();
+                    } else if (pageId === 'catalog-page') {
+                        fetchAndRenderCatalog();
+                    }
+                });
             });
-        });
 
-        // מאזין לאירוע לחיצה על כפתור ההוספה
-        addItemBtn.addEventListener('click', addNewItem);
+            newOrderBtn.addEventListener('click', () => {
+                switchPage('order-page');
+            });
+            sendOrderBtn.addEventListener('click', addNewOrder);
+            
+            // Login listeners
+            loginBtn.addEventListener('click', handleLogin);
+            phoneInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleLogin();
+            });
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleLogin();
+            });
 
-        // מאזין לאירוע לחיצה על כפתור הכניסה
-        loginBtn.addEventListener('click', handleLogin);
-        phoneInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin();
-        });
-        passwordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin();
-        });
+            // Container modal listeners
+            containerActionButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    openContainerModal({ action: e.target.dataset.action });
+                });
+            });
 
-        // פונקציה לטיפול בכפתור השפה
-        langBtn.addEventListener('click', () => {
-            showStatusMessage('שינוי שפה מתוכנן לגרסה הבאה', 'text-blue-500');
-        });
+            modalCloseBtn.addEventListener('click', () => {
+                containerModal.classList.remove('open');
+            });
+            modalSendBtn.addEventListener('click', sendContainerRequest);
 
-        // התחלה
-        updateDateTime();
-        setInterval(updateDateTime, 1000);
+            // Lang button
+            langBtn.addEventListener('click', () => {
+                showToast('שינוי שפה מתוכנן לגרסה הבאה');
+            });
+
+            // Initial calls
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        });
     </script>
 </body>
 </html>
